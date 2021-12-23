@@ -158,7 +158,7 @@ int main(){
 
     // build and compile our shader zprogram
     // ------------------------------------
-    Shader ourShader("../src/include/default.vert", "../src/include/default.frag");
+    Shader defaultShader("../src/include/default.vert", "../src/include/default.frag");
 
     // static world space positions of our cubes and pyramids
     int cubeCount = 10;
@@ -218,17 +218,17 @@ int main(){
 
     // tell opengl for each sampler to which texture unit it belongs to (only has to be done once)
     // -------------------------------------------------------------------------------------------
-    ourShader.use();
-    ourShader.setInt("texture1", 0);
-    ourShader.setInt("texture2", 1);
-    ourShader.setInt("texture3", 2);
-    ourShader.setInt("texture4", 3);
-    ourShader.setInt("texture5", 4);
-    ourShader.setInt("texture6", 5);
-    ourShader.setInt("texture_mario_sand", 6);
-    ourShader.setInt("texture_moss", 7);
-    ourShader.setInt("texture_wood", 8);
-    ourShader.setInt("texture_sky", 9);
+    defaultShader.use();
+    defaultShader.setInt("texture1", 0);
+    defaultShader.setInt("texture2", 1);
+    defaultShader.setInt("texture3", 2);
+    defaultShader.setInt("texture4", 3);
+    defaultShader.setInt("texture5", 4);
+    defaultShader.setInt("texture6", 5);
+    defaultShader.setInt("texture_mario_sand", 6);
+    defaultShader.setInt("texture_moss", 7);
+    defaultShader.setInt("texture_wood", 8);
+    defaultShader.setInt("texture_sky", 9);
 
     glEnable(GL_DEPTH_TEST);
 
@@ -252,15 +252,15 @@ int main(){
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // activate shader
-        ourShader.use();
+        defaultShader.use();
 
         // pass projection matrix to shader (note that in this case it could change every frame)
         glm::mat4 projection = glm::perspective(glm::radians(fov), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-        ourShader.setMat4("projection", projection);
+        defaultShader.setMat4("projection", projection);
 
         // camera/view transformation
         glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
-        ourShader.setMat4("view", view);
+        defaultShader.setMat4("view", view);
 
         glm::mat4 model = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
 
@@ -285,57 +285,56 @@ int main(){
             // Rotate each model at a slight offset
             float angle = 20.0f * currentFrame * ((float)n + 1);
             model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-            ourShader.setMat4("model", model);
+            defaultShader.setMat4("model", model);
             glDepthFunc(GL_LEQUAL);
             glDrawArrays(GL_TRIANGLES, 0, 36);
         }
 
         // render outside world
-        renderObject(0, texture_sky, model, ourShader, 36, glm::vec3(0, 0, 0), 90.0);
+        renderObject(0, texture_sky, model, defaultShader, 36, glm::vec3(0, 0, 0), 90.0);
 
         // render crosshair
         float offset = 0.1f;
         glm::vec3 temp = cameraPos + (cameraFront * offset);
-        // TODO: add 'static' property to orient to camera's view making it look like it is in front you
+        // TODO: add 'static' property to orient to camera's view making it look like it is in front of you
         glm::vec3 position = temp;
-//        float angle = 60.0f;
-//        model = glm::rotate(model, glm::radians(angle), glm::vec3(-temp.x, -temp.y, -temp.z));
-        renderObject(0, texture1, model, ourShader, 36, position, 0.0005);
+        renderObject(0, texture1, model, defaultShader, 36, position, 0.0005);
 
-        // render player
-        temp = cameraPos + (cameraFront * offset);
-        // TODO: add 'static' property to orient to camera's view making it look like it is in front you
-        position = temp - cameraFront;
+//        // render player
+//        offset = 0.1f;
+//        temp = cameraPos + (cameraFront * offset);
+//        // TODO: add 'static' property to orient to camera's view making it look like it is in front of you
+//        position = temp;
+//        view = glm::translate(view, cameraFront);
+//        view = glm::rotate(view, 60.0f, cameraFront);
+//        renderObject(0, texture2, view, defaultShader, 36, cameraPos, 0.2);
 
-//        float angle = 60.0f;
-//        model = glm::rotate(model, glm::radians(angle), glm::vec3(-temp.x, -temp.y, -temp.z));
-        renderObject(0, texture2, model, ourShader, 36, position, 0.1);
 
         // render plane
-        renderObject(1, texture3, model, ourShader, 6, glm::vec3(0, 0, 0), 1.0f);
+        renderObject(1, texture3, model, defaultShader, 6, glm::vec3(0, 0, 0), 1.0f);
 
         // render pyramidCount
         for (int n = 0; n < pyramidCount; n++) {
-            renderObject(2, texture_wood, model, ourShader, 24, pyramidPositions[n]);
+            renderObject(2, texture_wood, model, defaultShader, 24, pyramidPositions[n]);
         }
 
 //        // render the loaded model
 //        glActiveTexture(GL_TEXTURE0);
 //        glBindTexture(GL_TEXTURE_2D, texture4);
 //        model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
-//        ourShader.setMat4("model", model);
-//        misuse1.Draw(ourShader);
+//        defaultShader.setMat4("model", model);
+//        misuse1.Draw(defaultShader);
 //
 //        model = glm::translate(model, glm::vec3(0.5f, 0.0f, 0.8f)); // translate it down so it's at the center of the scene
 //        model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));	// it's a bit too big for our scene, so scale it down
-//        ourShader.setMat4("model", model);
-//        guitar1.Draw(ourShader);
+//        defaultShader.setMat4("model", model);
+//        guitar1.Draw(defaultShader);
 //
 //        glActiveTexture(GL_TEXTURE0);
 //        glBindTexture(GL_TEXTURE_2D, texture1);
 //        model = glm::translate(model, glm::vec3(0.5f, 0.0f, 0.5f)); // translate it down so it's at the center of the scene
-//        ourShader.setMat4("model", model);
-//        misuse2.Draw(ourShader);
+//        defaultShader.setMat4("model", model);
+//        misuse2.Draw(defaultShader);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -374,8 +373,6 @@ void processInput(GLFWwindow *window){
             jump = true;
         }
     }
-
-//    renderObject(0, texture6, model, ourShader, 36, glm::vec3(0, 0, 0), planeMax * 3);
 
     if (cameraPos.x > planeMax * 1){
         cameraPos.x = planeMax;
