@@ -37,7 +37,7 @@ glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 glm::vec3 cameraUp    = glm::vec3(0.0f, 1.0f,  0.0f);
 
 // camera
-float lastX = SCR_WIDTH / 2.0f;
+float lastX = SCR_WIDTH / 2.0f  ;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
 float yaw   = -90.0f;	// yaw is initialized to -90.0 degrees since a yaw of 0.0 results in a direction vector pointing to the right so we initially rotate a bit to the left.
@@ -103,6 +103,22 @@ void renderObject(int vboID, int textureID, glm::mat4 model, Shader& shader, int
     glDepthFunc(GL_LEQUAL);
     glDrawArrays(GL_TRIANGLES, 0, points);
 }
+
+void playerJump(float& currentFrame){
+    float floorOffset = 1.5f;
+    float amplitude = 3.0f;
+    float speed = 5.0f;
+    float x = currentFrame - jumpStart;
+    float playerView = floorMin + floorOffset;
+
+    if (x < 0.0) x = 0.0;
+
+    if (jump){
+        float y = amplitude * (glm::sin(speed * x)) + floorOffset;
+        (y >= playerView) ? cameraPos.y = y : jump = false;
+    }
+}
+
 
 int main(){
     // glfw: initialize and configure
@@ -227,28 +243,8 @@ int main(){
         // range 0 to PI, normalize, iterate
         processInput(window);
 
-
         // Handle jumps
-        float floorOffset = 1.5f;
-        float amplitude = 6.0f;
-        float speed = 5.0f;
-        float x = currentFrame - jumpStart;
-        if (x < 0.0) x = 0.0;
-        if (jump){
-            float y = amplitude * (glm::sin(speed * x)) + floorOffset;
-            if (y >= floorMin + floorOffset){
-//                spdlog::info("x: {}", x);
-//                spdlog::info("y: {}", y);
-                cameraPos.y = y;
-            }
-            else{
-                spdlog::info("too low");
-                jump = false;
-            }
-            spdlog::info("y: {}", y);
-        }
-
-
+        playerJump(currentFrame);
 
         // render
         // ------
@@ -297,14 +293,23 @@ int main(){
         // render outside world
         renderObject(0, texture_sky, model, ourShader, 36, glm::vec3(0, 0, 0), 90.0);
 
-        // render player
+        // render crosshair
         float offset = 0.1f;
         glm::vec3 temp = cameraPos + (cameraFront * offset);
         // TODO: add 'static' property to orient to camera's view making it look like it is in front you
         glm::vec3 position = temp;
 //        float angle = 60.0f;
 //        model = glm::rotate(model, glm::radians(angle), glm::vec3(-temp.x, -temp.y, -temp.z));
-        renderObject(0, texture_wood, model, ourShader, 36, position, 0.0005);
+        renderObject(0, texture1, model, ourShader, 36, position, 0.0005);
+
+        // render player
+        temp = cameraPos + (cameraFront * offset);
+        // TODO: add 'static' property to orient to camera's view making it look like it is in front you
+        position = temp - cameraFront;
+
+//        float angle = 60.0f;
+//        model = glm::rotate(model, glm::radians(angle), glm::vec3(-temp.x, -temp.y, -temp.z));
+        renderObject(0, texture2, model, ourShader, 36, position, 0.1);
 
         // render plane
         renderObject(1, texture3, model, ourShader, 6, glm::vec3(0, 0, 0), 1.0f);
