@@ -299,13 +299,12 @@ int main(){
 
         // render player
         float offset = 0.1f;
-
         glm::vec3 temp = cameraPos + (cameraFront * offset);
         // TODO: add 'static' property to orient to camera's view making it look like it is in front you
-        float angle = 60.0f;
         glm::vec3 position = temp;
+//        float angle = 60.0f;
 //        model = glm::rotate(model, glm::radians(angle), glm::vec3(-temp.x, -temp.y, -temp.z));
-        renderObject(0, texture6, model, ourShader, 36, position, 0.0005);
+        renderObject(0, texture_wood, model, ourShader, 36, position, 0.0005);
 
         // render plane
         renderObject(1, texture3, model, ourShader, 6, glm::vec3(0, 0, 0), 1.0f);
