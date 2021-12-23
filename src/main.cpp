@@ -231,7 +231,7 @@ int main(){
         // Handle jumps
         float floorOffset = 1.5f;
         float amplitude = 6.0f;
-        float speed = 2.0f;
+        float speed = 5.0f;
         float x = currentFrame - jumpStart;
         if (x < 0.0) x = 0.0;
         if (jump){
