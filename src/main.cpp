@@ -228,23 +228,27 @@ int main(){
         processInput(window);
 
 
-        // Handle player jumps
+        // Handle jumps
         float floorOffset = 1.5f;
-        float amplitude = 2.0f;
-        float period = 4.0f;
+        float amplitude = 6.0f;
+        float speed = 2.0f;
         float x = currentFrame - jumpStart;
         if (x < 0.0) x = 0.0;
         if (jump){
-            float y = glm::sin(x) + floorOffset;
+            float y = amplitude * (glm::sin(speed * x)) + floorOffset;
             if (y >= floorMin + floorOffset){
+//                spdlog::info("x: {}", x);
+//                spdlog::info("y: {}", y);
                 cameraPos.y = y;
             }
-            if (y < floorOffset - 0.01){
+            else{
                 spdlog::info("too low");
                 jump = false;
             }
             spdlog::info("y: {}", y);
         }
+
+
 
         // render
         // ------
@@ -361,12 +365,9 @@ void processInput(GLFWwindow *window){
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
     if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
-        if (cameraPos.y <= 1.51f) {
+        if (!jump) {
             jumpStart = glfwGetTime();
             jump = true;
-        }
-        else {
-            jump = false;
         }
     }
 
