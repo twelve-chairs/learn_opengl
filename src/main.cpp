@@ -96,9 +96,9 @@ void renderObject(int vboID, int textureID, glm::mat4 model, Shader& shader, int
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
     model = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
-    model = glm::translate(model, position);
     model = glm::scale(model, glm::vec3(newScale, newScale, newScale));
-    model = glm::rotate(model, rotate, glm::vec3(0.0f, 0.0f, 1.0f));
+    model = glm::rotate(model, rotate, glm::vec3(0.0f, 1.0f, 0.0f));
+    model = glm::translate(model, position);
 
     shader.setMat4("model", model);
     glDepthFunc(GL_LEQUAL);
@@ -309,11 +309,13 @@ int main(){
         for (unsigned int n = 0; n < cubeCount; n++){
             // calculate the model matrix for each object and pass it to shader before drawing
             model = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
-            model = glm::translate(model, cubePositions[n]);
 
             // Rotate each model at a slight offset
             float angle = 20.0f * currentFrame * ((float)n + 1);
+            model = glm::translate(model, cubePositions[n]);
             model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+
+
             defaultShader.setMat4("model", model);
             glDepthFunc(GL_LEQUAL);
             glDrawArrays(GL_TRIANGLES, 0, 36);
@@ -347,7 +349,7 @@ int main(){
             renderObject(2, texture_wood, model, defaultShader, 24, pyramidPositions[n]);
         }
 
-        renderObject(3, texture_moss, model, defaultShader, 36, glm::vec3(10, 0.5, 0), 1.0f, 270.0f);
+        renderObject(3, texture_moss, model, defaultShader, 36, glm::vec3(10, 0.5, 0), 1.0f, 120.0f);
         renderObject(3, texture_moss, model, defaultShader, 36, glm::vec3(20, 0.5, 0), 1.0f);
         renderObject(3, texture_moss, model, defaultShader, 36, glm::vec3(-20, 0.5, 0), 1.0f);
 //        renderObject(3, texture_moss, model, defaultShader, 36, glm::vec3(0, 0.5, -20), 1.0f, 60.0f);
