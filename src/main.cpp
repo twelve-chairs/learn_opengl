@@ -360,7 +360,6 @@ void processInput(GLFWwindow *window){
 
     float cameraSpeed = 3.0f * deltaTime;
     if (glfwGetKey(window, (GLFW_KEY_RIGHT_SHIFT)) || glfwGetKey(window, (GLFW_KEY_LEFT_SHIFT)) == GLFW_PRESS){
-        spdlog::info("shift");
         cameraSpeed *= 3.0f;
     }
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
