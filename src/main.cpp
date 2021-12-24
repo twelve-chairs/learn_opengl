@@ -359,6 +359,10 @@ void processInput(GLFWwindow *window){
         glfwSetWindowShouldClose(window, true);
 
     float cameraSpeed = 3.0f * deltaTime;
+    if (glfwGetKey(window, (GLFW_KEY_RIGHT_SHIFT)) || glfwGetKey(window, (GLFW_KEY_LEFT_SHIFT)) == GLFW_PRESS){
+        spdlog::info("shift");
+        cameraSpeed *= 3.0f;
+    }
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
         cameraPos += cameraSpeed * cameraFront;
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
