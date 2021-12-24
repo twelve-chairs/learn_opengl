@@ -80,7 +80,7 @@ void createTexture(GLuint& texture, const std::string& path, bool alpha){
     stbi_image_free(data);
 }
 
-void renderObject(int vboID, int textureID, glm::mat4 model, Shader& shader, int points, glm::vec3 position, float newScale = 1.0f, glm::vec3 rotate = glm::vec3(1.0f, 1.0f, 1.0f)){
+void renderObject(int vboID, int textureID, glm::mat4 model, Shader& shader, int points, glm::vec3 position, float newScale = 1.0f, float rotate = 0.0f){
     glBindBuffer(GL_ARRAY_BUFFER, VBO[vboID]);
     // position attribute
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
@@ -94,10 +94,11 @@ void renderObject(int vboID, int textureID, glm::mat4 model, Shader& shader, int
     glBindTexture(GL_TEXTURE_2D, textureID);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
     model = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
     model = glm::translate(model, position);
     model = glm::scale(model, glm::vec3(newScale, newScale, newScale));
-//    model = glm::rotate(model, rotate);
+    model = glm::rotate(model, rotate, glm::vec3(0.0f, 0.0f, 1.0f));
 
     shader.setMat4("model", model);
     glDepthFunc(GL_LEQUAL);
@@ -118,7 +119,6 @@ void playerJump(float& currentFrame){
         (y >= playerView) ? cameraPos.y = y : jump = false;
     }
 }
-
 
 int main(){
     // glfw: initialize and configure
@@ -171,14 +171,41 @@ int main(){
         );
     }
 
-    int pyramidCount = 24;
-    glm::vec3 pyramidPositions[pyramidCount];
-    for (int n = 0; n < pyramidCount; n++) {
-        pyramidPositions[n] = glm::vec3(
-                glm::linearRand(-planeMax, planeMax),
-                glm::linearRand(-2.5f, 1.0f),
-                glm::linearRand(-planeMax, planeMax));
-    }
+    int pyramidCount = 8;
+    glm::vec3 pyramidPositions[] = {
+            glm::vec3(
+                -planeMax,
+                0.5f,
+                -planeMax),
+            glm::vec3(
+                    planeMax,
+                    0.5f,
+                    -planeMax),
+            glm::vec3(
+                    0.0f,
+                    0.5f,
+                    -planeMax),
+            glm::vec3(
+                    -planeMax,
+                    0.5f,
+                    0.0f),
+            glm::vec3(
+                    0.0f,
+                    0.5f,
+                    planeMax),
+            glm::vec3(
+                    planeMax,
+                    0.5f,
+                    0.0f),
+            glm::vec3(
+                    -planeMax,
+                    0.5f,
+                    planeMax),
+            glm::vec3(
+                    planeMax,
+                    0.5f,
+                    planeMax)
+    };
 
     glGenVertexArrays(VAOs, VAO);
     glGenBuffers(VBOs, VBO);
@@ -193,6 +220,9 @@ int main(){
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO[2]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(pyramidVertices), pyramidVertices, GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ARRAY_BUFFER, VBO[3]);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(woodVertices), woodVertices, GL_STATIC_DRAW);
 
 
     // load models
@@ -278,7 +308,6 @@ int main(){
 
         for (unsigned int n = 0; n < cubeCount; n++){
             // calculate the model matrix for each object and pass it to shader before drawing
-            glm::mat4 model = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
             model = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
             model = glm::translate(model, cubePositions[n]);
 
@@ -317,6 +346,11 @@ int main(){
         for (int n = 0; n < pyramidCount; n++) {
             renderObject(2, texture_wood, model, defaultShader, 24, pyramidPositions[n]);
         }
+
+        renderObject(3, texture_moss, model, defaultShader, 36, glm::vec3(10, 0.5, 0), 1.0f, 270.0f);
+        renderObject(3, texture_moss, model, defaultShader, 36, glm::vec3(20, 0.5, 0), 1.0f);
+        renderObject(3, texture_moss, model, defaultShader, 36, glm::vec3(-20, 0.5, 0), 1.0f);
+//        renderObject(3, texture_moss, model, defaultShader, 36, glm::vec3(0, 0.5, -20), 1.0f, 60.0f);
 
 //        // render the loaded model
 //        glActiveTexture(GL_TEXTURE0);
