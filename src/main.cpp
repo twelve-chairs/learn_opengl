@@ -50,6 +50,8 @@ float lastFrame = 0.0f;
 bool jump = false;
 float jumpStart = 0.0f;
 
+float testAngle = 0.0f;
+
 void createTexture(GLuint& texture, const std::string& path, bool alpha){
     // texture 1
     // ---------
@@ -97,7 +99,7 @@ void renderObject(int vboID, int textureID, glm::mat4 model, Shader& shader, int
 
     model = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
     model = glm::scale(model, glm::vec3(newScale, newScale, newScale));
-    model = glm::rotate(model, rotate, glm::vec3(0.0f, 1.0f, 0.0f));
+    model = glm::rotate(model, glm::radians(rotate), glm::vec3(0.0f, 1.0f, 0.0f));
     model = glm::translate(model, position);
 
     shader.setMat4("model", model);
@@ -171,6 +173,16 @@ int main(){
         );
     }
 
+    int grassCount = 200;
+    glm::vec3 grassPositions[grassCount];
+    for (int n = 0; n < grassCount; n++) {
+        grassPositions[n] = glm::vec3(
+                glm::linearRand(-planeMax, planeMax),
+                glm::linearRand(floorMin, floorMin + 0.25f),
+                glm::linearRand(-planeMax, planeMax)
+        );
+    }
+
     int pyramidCount = 8;
     glm::vec3 pyramidPositions[] = {
             glm::vec3(
@@ -207,58 +219,59 @@ int main(){
                     planeMax)
     };
 
-    glGenVertexArrays(VAOs, VAO);
-    glGenBuffers(VBOs, VBO);
-
-    glBindVertexArray(VAO[0]);
-
-    glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertices), cubeVertices, GL_STATIC_DRAW);
-
-    glBindBuffer(GL_ARRAY_BUFFER, VBO[1]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(planeVertices), planeVertices, GL_STATIC_DRAW);
-
-    glBindBuffer(GL_ARRAY_BUFFER, VBO[2]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(pyramidVertices), pyramidVertices, GL_STATIC_DRAW);
-
-    glBindBuffer(GL_ARRAY_BUFFER, VBO[3]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(woodVertices), woodVertices, GL_STATIC_DRAW);
+//    glGenVertexArrays(VAOs, VAO);
+//    glGenBuffers(VBOs, VBO);
+//
+//    glBindVertexArray(VAO[0]);
+//
+//    glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);
+//    glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertices), cubeVertices, GL_STATIC_DRAW);
+//
+//    glBindBuffer(GL_ARRAY_BUFFER, VBO[1]);
+//    glBufferData(GL_ARRAY_BUFFER, sizeof(planeVertices), planeVertices, GL_STATIC_DRAW);
+//
+//    glBindBuffer(GL_ARRAY_BUFFER, VBO[2]);
+//    glBufferData(GL_ARRAY_BUFFER, sizeof(pyramidVertices), pyramidVertices, GL_STATIC_DRAW);
+//
+//    glBindBuffer(GL_ARRAY_BUFFER, VBO[3]);
+//    glBufferData(GL_ARRAY_BUFFER, sizeof(woodVertices), woodVertices, GL_STATIC_DRAW);
 
 
     // load models
     // -----------
     stbi_set_flip_vertically_on_load(true);
-//    Model guitar1("../src/include/backpack/backpack.obj");
-//    Model misuse1("../src/include/misuse.obj");
-//    Model misuse2("../src/include/misuse.obj");
+    Model guitar("../src/include/backpack/backpack.obj");
+    Model plane("../src/include/plane.obj");
+    Model cube("../src/include/cube.obj");
+    Model grass("../src/include/91-trava-kolosok/trava.obj");
+
+    // Build collection
+    std::vector<Model> grassObjects(200, guitar);
 
     // load and create a texture
     // -------------------------
-    unsigned int texture1, texture2, texture3, texture4, texture5, texture6, texture_moss, texture_straw, texture_wood, texture_sky;
-    createTexture(texture1, "../src/include/container.jpeg", false);
-    createTexture(texture2, "../src/include/awesomeface.png", true);
-    createTexture(texture3, "../src/include/grass.png", true);
-    createTexture(texture4, "../src/include/mario_mystery.png", true);
-    createTexture(texture5, "../src/include/mario_bricks.png", false);
-    createTexture(texture6, "../src/include/mario_block.png", true);
-    createTexture(texture_moss, "../src/include/moss.jpg", false);
-    createTexture(texture_straw, "../src/include/straw.jpg", false);
-    createTexture(texture_wood, "../src/include/woodtiles.jpg", false);
+    unsigned int texture_container, texture_face, texture_grass, texture_mystery, texture_bricks, texture_rock, texture_wood, texture_sky;
+    createTexture(texture_container, "../src/include/container.jpeg", false);
+    createTexture(texture_face, "../src/include/awesomeface.png", true);
+    createTexture(texture_grass, "../src/include/grass.png", true);
+    createTexture(texture_mystery, "../src/include/mario_mystery.png", true);
+    createTexture(texture_bricks, "../src/include/mario_bricks.png", false);
+    createTexture(texture_rock, "../src/include/rock.jpg", false);
+    createTexture(texture_wood, "../src/include/wood.jpg", false);
     createTexture(texture_sky, "../src/include/space.png", true);
 
     // tell opengl for each sampler to which texture unit it belongs to (only has to be done once)
     // -------------------------------------------------------------------------------------------
     defaultShader.use();
-    defaultShader.setInt("texture1", 0);
-    defaultShader.setInt("texture2", 1);
-    defaultShader.setInt("texture3", 2);
-    defaultShader.setInt("texture4", 3);
-    defaultShader.setInt("texture5", 4);
-    defaultShader.setInt("texture6", 5);
-    defaultShader.setInt("texture_mario_sand", 6);
-    defaultShader.setInt("texture_moss", 7);
-    defaultShader.setInt("texture_wood", 8);
-    defaultShader.setInt("texture_sky", 9);
+    defaultShader.setInt("texture_container", 0);
+    defaultShader.setInt("texture_face", 1);
+    defaultShader.setInt("texture_grass", 2);
+    defaultShader.setInt("texture_mystery", 3);
+    defaultShader.setInt("texture_bricks", 4);
+    defaultShader.setInt("texture_mario_sand", 5);
+    defaultShader.setInt("texture_rock", 6);
+    defaultShader.setInt("texture_wood", 7);
+    defaultShader.setInt("texture_sky", 8);
 
     glEnable(GL_DEPTH_TEST);
 
@@ -304,17 +317,16 @@ int main(){
         glEnableVertexAttribArray(1);
         // bind textures on corresponding texture units
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texture4);
-
+        glBindTexture(GL_TEXTURE_2D, texture_mystery);
+//
         for (unsigned int n = 0; n < cubeCount; n++){
             // calculate the model matrix for each object and pass it to shader before drawing
             model = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
 
             // Rotate each model at a slight offset
             float angle = 20.0f * currentFrame * ((float)n + 1);
+            model = glm::rotate(model, glm::radians(angle), cubePositions[n]);
             model = glm::translate(model, cubePositions[n]);
-            model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-
 
             defaultShader.setMat4("model", model);
             glDepthFunc(GL_LEQUAL);
@@ -322,55 +334,75 @@ int main(){
         }
 
         // render outside world
-        renderObject(0, texture_sky, model, defaultShader, 36, glm::vec3(0, 0, 0), 90.0);
-
-        // render crosshair
-        float offset = 0.1f;
-        glm::vec3 temp = cameraPos + (cameraFront * offset);
-        // TODO: add 'static' property to orient to camera's view making it look like it is in front of you
-        glm::vec3 position = temp;
-        renderObject(0, texture1, model, defaultShader, 36, position, 0.0005);
-
+//        renderObject(0, texture_sky, model, defaultShader, 36, glm::vec3(0, 0, 0), 90.0);
+//
+//        // render crosshair
+//        float offset = 0.1f;
+//        glm::vec3 temp = cameraPos + (cameraFront * offset);
+//        // TODO: add 'static' property to orient to camera's view making it look like it is in front of you
+//        glm::vec3 position = temp;
+//        renderObject(0, texture_container, model, defaultShader, 36, position, 0.0005);
+//
 //        // render player
 //        offset = 0.1f;
 //        temp = cameraPos + (cameraFront * offset);
-//        // TODO: add 'static' property to orient to camera's view making it look like it is in front of you
-//        position = temp;
-//        view = glm::translate(view, cameraFront);
-//        view = glm::rotate(view, 60.0f, cameraFront);
-//        renderObject(0, texture2, view, defaultShader, 36, cameraPos, 0.2);
-
-
+//        model = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
+//        model = glm::scale(model, glm::vec3(0.2f, 0.2f, 0.2f));
+//        model = glm::rotate(model, glm::radians(testAngle), cameraFront);
+//        model = glm::translate(model, cameraFront);
+//        defaultShader.setMat4("model", model);
+//        glDepthFunc(GL_LEQUAL);
+//        glDrawArrays(GL_TRIANGLES, 0, 36);
+//
         // render plane
-        renderObject(1, texture3, model, defaultShader, 6, glm::vec3(0, 0, 0), 1.0f);
+//        renderObject(1, texture_grass, model, defaultShader, 6, glm::vec3(0, 0, 0), 1.0f);
+//
+//        // render pyramidCount
+//        for (int n = 0; n < pyramidCount; n++) {
+//            renderObject(2, texture_rock, model, defaultShader, 24, pyramidPositions[n]);
+//        }
+//
+        // render planks
+//        renderObject(3, texture_wood, model, defaultShader, 36, glm::vec3(20.0f, 0.5f, 0.0f), 1.0f, 90.0f);
+//        renderObject(3, texture_wood, model, defaultShader, 36, glm::vec3(-20.0f, 0.5f, 0.0f), 1.0f, 90.0f);
+//        renderObject(3, texture_wood, model, defaultShader, 36, glm::vec3(20.0f, 0.5f, 0.0f), 1.0f);
+//        renderObject(3, texture_wood, model, defaultShader, 36, glm::vec3(-20.0f, 0.5f, 0.0f), 1.0f);
+//
+//        renderObject(3, texture_wood, model, defaultShader, 36, glm::vec3(20.0f, 1.0f, 0.0f), 1.0f, 90.0f);
+//        renderObject(3, texture_wood, model, defaultShader, 36, glm::vec3(-20.0f, 1.0f, 0.0f), 1.0f, 90.0f);
+//        renderObject(3, texture_wood, model, defaultShader, 36, glm::vec3(20.0f, 1.0f, 0.0f), 1.0f);
+//        renderObject(3, texture_wood, model, defaultShader, 36, glm::vec3(-20.0f, 1.0f, 0.0f), 1.0f);
 
-        // render pyramidCount
-        for (int n = 0; n < pyramidCount; n++) {
-            renderObject(2, texture_wood, model, defaultShader, 24, pyramidPositions[n]);
+
+        // render the loaded model
+        glActiveTexture(GL_TEXTURE0);
+
+        model = glm::mat4(1.0f);
+        model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));	// it's a bit too big for our scene, so scale it down
+        model = glm::translate(model, glm::vec3(0.5f, 2.0f, 0.8f)); // translate it down so it's at the center of the scene
+        defaultShader.setMat4("model", model);
+        guitar.Draw(defaultShader);
+
+        glBindTexture(GL_TEXTURE_2D, texture_sky);
+        model = glm::mat4(1.0f);
+        model = glm::scale(model, glm::vec3(50.0f, 50.0f, 50.0f));
+        model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
+        defaultShader.setMat4("model", model);
+        cube.Draw(defaultShader);
+
+        glBindTexture(GL_TEXTURE_2D, texture_grass);
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
+        defaultShader.setMat4("model", model);
+        plane.Draw(defaultShader);
+
+        for (int n=0; n < grassObjects.size() - 1; n++) {
+            model = glm::mat4(1.0f);
+            model = glm::scale(model, glm::vec3(0.001f, 0.001f, 0.001f));
+            model = glm::translate(model, grassPositions[n]);
+            defaultShader.setMat4("model", model);
+            grassObjects[n].Draw(defaultShader);
         }
-
-        renderObject(3, texture_moss, model, defaultShader, 36, glm::vec3(10, 0.5, 0), 1.0f, 120.0f);
-        renderObject(3, texture_moss, model, defaultShader, 36, glm::vec3(20, 0.5, 0), 1.0f);
-        renderObject(3, texture_moss, model, defaultShader, 36, glm::vec3(-20, 0.5, 0), 1.0f);
-//        renderObject(3, texture_moss, model, defaultShader, 36, glm::vec3(0, 0.5, -20), 1.0f, 60.0f);
-
-//        // render the loaded model
-//        glActiveTexture(GL_TEXTURE0);
-//        glBindTexture(GL_TEXTURE_2D, texture4);
-//        model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
-//        defaultShader.setMat4("model", model);
-//        misuse1.Draw(defaultShader);
-//
-//        model = glm::translate(model, glm::vec3(0.5f, 0.0f, 0.8f)); // translate it down so it's at the center of the scene
-//        model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));	// it's a bit too big for our scene, so scale it down
-//        defaultShader.setMat4("model", model);
-//        guitar1.Draw(defaultShader);
-//
-//        glActiveTexture(GL_TEXTURE0);
-//        glBindTexture(GL_TEXTURE_2D, texture1);
-//        model = glm::translate(model, glm::vec3(0.5f, 0.0f, 0.5f)); // translate it down so it's at the center of the scene
-//        defaultShader.setMat4("model", model);
-//        misuse2.Draw(defaultShader);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -411,6 +443,14 @@ void processInput(GLFWwindow *window){
             jumpStart = glfwGetTime();
             jump = true;
         }
+    }
+    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
+        testAngle += 0.1f;
+        spdlog::info("testAngle: {}", testAngle);
+    }
+    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
+        testAngle -= 0.1f;
+        spdlog::info("testAngle: {}", testAngle);
     }
 
     if (cameraPos.x > planeMax * 1){
