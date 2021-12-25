@@ -5,18 +5,15 @@
 #ifndef LEARN_OPENGL_PRIMITIVES_H
 #define LEARN_OPENGL_PRIMITIVES_H
 
-const float planeMax = 200.0f;
-const float floorMin = 0.0f;
-
-float planeVertices[] = {
-        -planeMax, floorMin , -planeMax, 0.0f, 0.0f,
-        planeMax, floorMin , -planeMax, planeMax, 0.0f,
-        -planeMax, floorMin , planeMax, planeMax/2, planeMax,
-
-        -planeMax, floorMin , planeMax, planeMax, 0.0f,
-        planeMax, floorMin , planeMax, 0.0f, 0.0f,
-        planeMax, floorMin , -planeMax, planeMax/2, planeMax
-};
+//float planeVertices[] = {
+//        -planeMax, floorMin , -planeMax, 0.0f, 0.0f,
+//        planeMax, floorMin , -planeMax, planeMax, 0.0f,
+//        -planeMax, floorMin , planeMax, planeMax/2, planeMax,
+//
+//        -planeMax, floorMin , planeMax, planeMax, 0.0f,
+//        planeMax, floorMin , planeMax, 0.0f, 0.0f,
+//        planeMax, floorMin , -planeMax, planeMax/2, planeMax
+//};
 
 const float scale = 1.0f;
 

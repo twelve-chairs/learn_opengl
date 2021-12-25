@@ -1,4 +1,4 @@
-    const float scale = 1.0f;
+wa    const float scale = 1.0f;
 
     float pyramidVertices[] = {
             -2.0f, -2.0f, 2.0f, scale, 0.0f,

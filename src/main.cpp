@@ -50,6 +50,9 @@ float lastFrame = 0.0f;
 bool jump = false;
 float jumpStart = 0.0f;
 
+const float planeMax = 20.0f;
+const float floorMin = 0.0f;
+
 float testAngle = 0.0f;
 
 void createTexture(GLuint& texture, const std::string& path, bool alpha){
@@ -164,59 +167,36 @@ int main(){
 
     // static world space positions of our cubes and pyramids
     int cubeCount = 10;
-    glm::vec3 cubePositions[cubeCount];
-    for (int n = 0; n < cubeCount; n++) {
-        cubePositions[n] = glm::vec3(
-                glm::linearRand(-planeMax, planeMax),
-                glm::linearRand(floorMin + 0.75f, 5.0f),
-                glm::linearRand(-planeMax, planeMax)
-        );
-    }
+    std::vector<glm::vec3> cubePositions(cubeCount, glm::vec3(
+            glm::linearRand(-planeMax, planeMax),
+            glm::linearRand(floorMin + 0.75f, 5.0f),
+            glm::linearRand(-planeMax, planeMax)
+    ));
 
-    int grassCount = 200;
-    glm::vec3 grassPositions[grassCount];
-    for (int n = 0; n < grassCount; n++) {
-        grassPositions[n] = glm::vec3(
-                glm::linearRand(-planeMax, planeMax),
-                glm::linearRand(floorMin, floorMin + 0.25f),
-                glm::linearRand(-planeMax, planeMax)
-        );
+
+    int grassCount = 3000;
+    int test_scale = 1000.0f;
+    std::vector<glm::vec3> grassPositions;
+    for (unsigned int n = 0; n < grassCount; n++){
+        grassPositions.push_back(glm::vec3(
+                glm::linearRand(-planeMax * test_scale, planeMax * test_scale),
+                glm::linearRand(floorMin - 0.1f, floorMin + 0.75f),
+                glm::linearRand(-planeMax * test_scale, planeMax * test_scale)
+        ));
     }
+    spdlog::info("Grass positions: {}", grassPositions.size());
+
 
     int pyramidCount = 8;
     glm::vec3 pyramidPositions[] = {
-            glm::vec3(
-                -planeMax,
-                0.5f,
-                -planeMax),
-            glm::vec3(
-                    planeMax,
-                    0.5f,
-                    -planeMax),
-            glm::vec3(
-                    0.0f,
-                    0.5f,
-                    -planeMax),
-            glm::vec3(
-                    -planeMax,
-                    0.5f,
-                    0.0f),
-            glm::vec3(
-                    0.0f,
-                    0.5f,
-                    planeMax),
-            glm::vec3(
-                    planeMax,
-                    0.5f,
-                    0.0f),
-            glm::vec3(
-                    -planeMax,
-                    0.5f,
-                    planeMax),
-            glm::vec3(
-                    planeMax,
-                    0.5f,
-                    planeMax)
+            glm::vec3(-planeMax, 0.5f, -planeMax),
+            glm::vec3(planeMax, 0.5f, -planeMax),
+            glm::vec3(0.0f, 0.5f, -planeMax),
+            glm::vec3(-planeMax, 0.5f, 0.0f),
+            glm::vec3(0.0f, 0.5f, planeMax),
+            glm::vec3(planeMax, 0.5f, 0.0f),
+            glm::vec3(-planeMax, 0.5f, planeMax),
+            glm::vec3(planeMax, 0.5f, planeMax)
     };
 
 //    glGenVertexArrays(VAOs, VAO);
@@ -246,7 +226,7 @@ int main(){
     Model grass("../src/include/91-trava-kolosok/trava.obj");
 
     // Build collection
-    std::vector<Model> grassObjects(200, guitar);
+    std::vector<Model> grassObjects(grassCount, grass);
 
     // load and create a texture
     // -------------------------
@@ -291,7 +271,7 @@ int main(){
 
         // render
         // ------
-        glClearColor(0.2f, 0.4f, 0.5f, 1.0f);
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // activate shader
@@ -307,31 +287,31 @@ int main(){
 
         glm::mat4 model = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
 
-        // render boxes
-        glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);
-        // position attribute
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-        glEnableVertexAttribArray(0);
-        // texture coord attribute
-        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-        glEnableVertexAttribArray(1);
-        // bind textures on corresponding texture units
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texture_mystery);
+//        // render boxes
+//        glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);
+//        // position attribute
+//        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+//        glEnableVertexAttribArray(0);
+//        // texture coord attribute
+//        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+//        glEnableVertexAttribArray(1);
+//        // bind textures on corresponding texture units
+//        glActiveTexture(GL_TEXTURE0);
+//        glBindTexture(GL_TEXTURE_2D, texture_mystery);
+////
+//        for (unsigned int n = 0; n < cubeCount; n++){
+//            // calculate the model matrix for each object and pass it to shader before drawing
+//            model = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
 //
-        for (unsigned int n = 0; n < cubeCount; n++){
-            // calculate the model matrix for each object and pass it to shader before drawing
-            model = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
-
-            // Rotate each model at a slight offset
-            float angle = 20.0f * currentFrame * ((float)n + 1);
-            model = glm::rotate(model, glm::radians(angle), cubePositions[n]);
-            model = glm::translate(model, cubePositions[n]);
-
-            defaultShader.setMat4("model", model);
-            glDepthFunc(GL_LEQUAL);
-            glDrawArrays(GL_TRIANGLES, 0, 36);
-        }
+//            // Rotate each model at a slight offset
+//            float angle = 20.0f * currentFrame * ((float)n + 1);
+//            model = glm::rotate(model, glm::radians(angle), cubePositions[n]);
+//            model = glm::translate(model, cubePositions[n]);
+//
+//            defaultShader.setMat4("model", model);
+//            glDepthFunc(GL_LEQUAL);
+//            glDrawArrays(GL_TRIANGLES, 0, 36);
+//        }
 
         // render outside world
 //        renderObject(0, texture_sky, model, defaultShader, 36, glm::vec3(0, 0, 0), 90.0);
@@ -373,36 +353,41 @@ int main(){
 //        renderObject(3, texture_wood, model, defaultShader, 36, glm::vec3(20.0f, 1.0f, 0.0f), 1.0f);
 //        renderObject(3, texture_wood, model, defaultShader, 36, glm::vec3(-20.0f, 1.0f, 0.0f), 1.0f);
 
-
         // render the loaded model
         glActiveTexture(GL_TEXTURE0);
 
         model = glm::mat4(1.0f);
         model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));	// it's a bit too big for our scene, so scale it down
-        model = glm::translate(model, glm::vec3(0.5f, 2.0f, 0.8f)); // translate it down so it's at the center of the scene
+        model = glm::rotate(model, glm::radians(50.0f), glm::vec3(1.0f, 0.0f, 0.0f));	// it's a bit too big for our scene, so scale it down
+        model = glm::translate(model, glm::vec3(0.5f, 2.0f, 0.8f));
         defaultShader.setMat4("model", model);
         guitar.Draw(defaultShader);
 
         glBindTexture(GL_TEXTURE_2D, texture_sky);
         model = glm::mat4(1.0f);
-        model = glm::scale(model, glm::vec3(50.0f, 50.0f, 50.0f));
+        model = glm::scale(model, glm::vec3(30.0f, 30.0f, 30.0f));
         model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
         defaultShader.setMat4("model", model);
         cube.Draw(defaultShader);
 
         glBindTexture(GL_TEXTURE_2D, texture_grass);
+
         model = glm::mat4(1.0f);
+        model = glm::scale(model, glm::vec3(20.0f, 20.0f, 20.0f));
         model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
         defaultShader.setMat4("model", model);
         plane.Draw(defaultShader);
 
-        for (int n=0; n < grassObjects.size() - 1; n++) {
+        glEnable( GL_BLEND );
+        glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+        for (unsigned int n = 0; n < grassPositions.size(); n++) {
             model = glm::mat4(1.0f);
             model = glm::scale(model, glm::vec3(0.001f, 0.001f, 0.001f));
             model = glm::translate(model, grassPositions[n]);
             defaultShader.setMat4("model", model);
             grassObjects[n].Draw(defaultShader);
         }
+        glDisable(GL_BLEND);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
