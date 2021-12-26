@@ -11,7 +11,7 @@
 #include <filesystem>
 #include <chrono>
 #include <thread>
-#include "shader_s.h"
+#include "Shader.h"
 #include "primitives.h"
 #include "Model.h"
 #include <iostream>
