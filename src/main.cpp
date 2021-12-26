@@ -40,9 +40,9 @@ glm::vec3 cameraUp    = glm::vec3(0.0f, 1.0f,  0.0f);
 float lastX = SCR_WIDTH / 2.0f  ;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
-float yaw   = -90.0f;	// yaw is initialized to -90.0 degrees since a yaw of 0.0 results in a direction vector pointing to the right so we initially rotate a bit to the left.
-float pitch =  0.0f;
-float fov   =  45.0f;
+float yaw = -90.0f;	// yaw is initialized to -90.0 degrees since a yaw of 0.0 results in a direction vector pointing to the right, so we initially rotate a bit to the left.
+float pitch = 0.0f;
+float fov = 45.0f;
 
 // timing
 float deltaTime = 0.0f;	// time between current frame and last frame
@@ -174,8 +174,9 @@ int main(){
     ));
 
 
-    int grassCount = 3000;
+    int grassCount = 2000;
     std::vector<glm::vec3> grassPositions;
+    // TODO: move to GPU via instancing
     for (unsigned int n = 0; n < grassCount; n++){
         grassPositions.push_back(glm::vec3(
                 glm::linearRand(-planeMax + 0.2f, planeMax - 0.2f),
@@ -357,15 +358,15 @@ int main(){
         glActiveTexture(GL_TEXTURE0);
 
         model = glm::mat4(1.0f);
-        model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));	// it's a bit too big for our scene, so scale it down
-        model = glm::rotate(model, glm::radians(50.0f), glm::vec3(1.0f, 0.0f, 0.0f));	// it's a bit too big for our scene, so scale it down
+        model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
+        model = glm::rotate(model, glm::radians(50.0f), glm::vec3(1.0f, 0.0f, 0.0f));
         model = glm::translate(model, glm::vec3(0.5f, 2.0f, 0.8f));
         defaultShader.setMat4("model", model);
         guitar.Draw(defaultShader);
 
         glBindTexture(GL_TEXTURE_2D, texture_sky);
         model = glm::mat4(1.0f);
-        model = glm::scale(model, glm::vec3(30.0f, 30.0f, 30.0f));
+        model = glm::scale(model, glm::vec3(40.0f, 40.0f, 40.0f));
         model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
         defaultShader.setMat4("model", model);
         cube.Draw(defaultShader);
