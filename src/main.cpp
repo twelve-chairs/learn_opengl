@@ -298,7 +298,6 @@ int main(){
 //        // bind textures on corresponding texture units
 //        glActiveTexture(GL_TEXTURE0);
 //        glBindTexture(GL_TEXTURE_2D, texture_mystery);
-////
 //        for (unsigned int n = 0; n < cubeCount; n++){
 //            // calculate the model matrix for each object and pass it to shader before drawing
 //            model = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
@@ -378,8 +377,8 @@ int main(){
         defaultShader.setMat4("model", model);
         plane.Draw(defaultShader);
 
-        glEnable( GL_BLEND );
-        glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         for (unsigned int n = 0; n < grassPositions.size(); n++) {
             model = glm::mat4(1.0f);
             model = glm::scale(model, glm::vec3(0.001f, 0.001f, 0.001f));
