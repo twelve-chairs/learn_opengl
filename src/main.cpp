@@ -175,13 +175,12 @@ int main(){
 
 
     int grassCount = 3000;
-    int test_scale = 1000.0f;
     std::vector<glm::vec3> grassPositions;
     for (unsigned int n = 0; n < grassCount; n++){
         grassPositions.push_back(glm::vec3(
-                glm::linearRand(-planeMax * test_scale, planeMax * test_scale),
-                glm::linearRand(floorMin - 0.1f, floorMin + 0.75f),
-                glm::linearRand(-planeMax * test_scale, planeMax * test_scale)
+                glm::linearRand(-planeMax + 0.2f, planeMax - 0.2f),
+                glm::linearRand(floorMin - 0.05f, floorMin),
+                glm::linearRand(-planeMax + 0.2f, planeMax - 0.2f)
         ));
     }
     spdlog::info("Grass positions: {}", grassPositions.size());
@@ -221,6 +220,8 @@ int main(){
     // -----------
     stbi_set_flip_vertically_on_load(true);
     Model guitar("../src/include/backpack/backpack.obj");
+
+    stbi_set_flip_vertically_on_load(false);
     Model plane("../src/include/plane.obj");
     Model cube("../src/include/cube.obj");
     Model grass("../src/include/91-trava-kolosok/trava.obj");
@@ -236,7 +237,7 @@ int main(){
     createTexture(texture_grass, "../src/include/grass.png", true);
     createTexture(texture_mystery, "../src/include/mario_mystery.png", true);
     createTexture(texture_bricks, "../src/include/mario_bricks.png", false);
-    createTexture(texture_rock, "../src/include/rock.jpg", false);
+    createTexture(texture_rock, "../src/include/rock.jpeg", false);
     createTexture(texture_wood, "../src/include/wood.jpg", false);
     createTexture(texture_sky, "../src/include/space.png", true);
 
@@ -370,7 +371,6 @@ int main(){
         cube.Draw(defaultShader);
 
         glBindTexture(GL_TEXTURE_2D, texture_grass);
-
         model = glm::mat4(1.0f);
         model = glm::scale(model, glm::vec3(20.0f, 20.0f, 20.0f));
         model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
@@ -381,7 +381,6 @@ int main(){
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         for (unsigned int n = 0; n < grassPositions.size(); n++) {
             model = glm::mat4(1.0f);
-            model = glm::scale(model, glm::vec3(0.001f, 0.001f, 0.001f));
             model = glm::translate(model, grassPositions[n]);
             defaultShader.setMat4("model", model);
             grassObjects[n].Draw(defaultShader);
