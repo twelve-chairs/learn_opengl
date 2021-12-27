@@ -32,9 +32,9 @@ GLuint VAO[VAOs];
 GLuint VBO[VBOs];
 
 // camera
-glm::vec3 cameraPos   = glm::vec3(0.0f, 0.0f,  3.0f);
+glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f,  3.0f);
 glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
-glm::vec3 cameraUp    = glm::vec3(0.0f, 1.0f,  0.0f);
+glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f,  0.0f);
 
 // camera
 float lastX = SCR_WIDTH / 2.0f  ;
@@ -126,19 +126,16 @@ void playerJump(float& currentFrame){
 }
 
 int main(){
-    // glfw: initialize and configure
-    // ------------------------------
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-#ifdef __APPLE__
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-#endif
+    #ifdef __APPLE__
+        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    #endif
 
     // glfw window creation
-    // --------------------
     GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "TwelveChairs", NULL, NULL);
     if (window == NULL){
         spdlog::error("Failed to create GLFW window");
@@ -161,8 +158,7 @@ int main(){
         return 0;
     }
 
-    // build and compile our shader zprogram
-    // ------------------------------------
+    // Build and compile our shader program
     Shader defaultShader("../src/include/default.vert", "../src/include/default.frag");
 
     // static world space positions of our cubes and pyramids
@@ -218,7 +214,6 @@ int main(){
 
 
     // load models
-    // -----------
     stbi_set_flip_vertically_on_load(true);
     Model guitar("../src/include/backpack/backpack.obj");
 
@@ -231,7 +226,6 @@ int main(){
     std::vector<Model> grassObjects(grassCount, grass);
 
     // load and create a texture
-    // -------------------------
     unsigned int texture_container, texture_face, texture_grass, texture_mystery, texture_bricks, texture_rock, texture_wood, texture_sky;
     createTexture(texture_container, "../src/include/container.jpeg", false);
     createTexture(texture_face, "../src/include/awesomeface.png", true);
@@ -243,7 +237,6 @@ int main(){
     createTexture(texture_sky, "../src/include/space.png", true);
 
     // tell opengl for each sampler to which texture unit it belongs to (only has to be done once)
-    // -------------------------------------------------------------------------------------------
     defaultShader.use();
     defaultShader.setInt("texture_container", 0);
     defaultShader.setInt("texture_face", 1);
@@ -257,22 +250,21 @@ int main(){
 
     glEnable(GL_DEPTH_TEST);
 
+    // Wireframe-only
 //    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     // render loop
-    // -----------
     while (!glfwWindowShouldClose(window)){
         float currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
-        // range 0 to PI, normalize, iterate
+
         processInput(window);
 
         // Handle jumps
         playerJump(currentFrame);
 
         // render
-        // ------
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -359,7 +351,7 @@ int main(){
 
         model = glm::mat4(1.0f);
         model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
-        model = glm::rotate(model, glm::radians(50.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+        model = glm::rotate(model, glm::radians(-1.0f), glm::vec3(1.0f, 0.0f, 0.0f));
         model = glm::translate(model, glm::vec3(0.5f, 2.0f, 0.8f));
         defaultShader.setMat4("model", model);
         guitar.Draw(defaultShader);
@@ -392,20 +384,14 @@ int main(){
         glfwPollEvents();
     }
 
-    // optional: de-allocate all resources once they've outlived their purpose:
-    // ------------------------------------------------------------------------
     glDeleteBuffers(VBOs, VBO);
     glDeleteVertexArrays(VAOs, VAO);
 
-    // glfw: terminate, clearing all previously allocated GLFW resources.
-    // ------------------------------------------------------------------
     glfwTerminate();
     return 0;
 }
 
 
-// process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
-// ---------------------------------------------------------------------------------------------------------
 void processInput(GLFWwindow *window){
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
@@ -455,16 +441,12 @@ void processInput(GLFWwindow *window){
     }
 }
 
-// glfw: whenever the window size changed (by OS or user resize) this callback function executes
-// ---------------------------------------------------------------------------------------------
 void framebufferSizeCallback(GLFWwindow* window, int width, int height){
     // make sure the viewport matches the new window dimensions; note that width and 
     // height will be significantly larger than specified on retina displays.
     glViewport(0, 0, width, height);
 }
 
-// glfw: whenever the mouse moves, this callback is called
-// -------------------------------------------------------
 void mouseCallback(GLFWwindow* window, double xpos, double ypos){
     if (firstMouse){
         lastX = xpos;
@@ -497,8 +479,6 @@ void mouseCallback(GLFWwindow* window, double xpos, double ypos){
     cameraFront = glm::normalize(front);
 }
 
-// glfw: whenever the mouse scroll wheel scrolls, this callback is called
-// ----------------------------------------------------------------------
 void scrollCallback(GLFWwindow* window, double xoffset, double yoffset){
     fov -= (float)yoffset;
     if (fov < 1.0f)
