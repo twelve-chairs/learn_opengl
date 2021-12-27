@@ -159,9 +159,9 @@ int main(){
     }
 
     // Build and compile our shader program
-    Shader defaultShader("../src/include/default.vert", "../src/include/default.frag");
+    Shader defaultShader("../src/default.vert", "../src/default.frag");
 
-    // static world space positions of our cubes and pyramids
+    // Static world space positions of our cubes and pyramids
     int cubeCount = 10;
     std::vector<glm::vec3> cubePositions(cubeCount, glm::vec3(
             glm::linearRand(-planeMax, planeMax),
@@ -225,7 +225,7 @@ int main(){
     // Build collection
     std::vector<Model> grassObjects(grassCount, grass);
 
-    // load and create a texture
+    // Load and create a texture
     unsigned int texture_container, texture_face, texture_grass, texture_mystery, texture_bricks, texture_rock, texture_wood, texture_sky;
     createTexture(texture_container, "../src/include/container.jpeg", false);
     createTexture(texture_face, "../src/include/awesomeface.png", true);
@@ -236,7 +236,7 @@ int main(){
     createTexture(texture_wood, "../src/include/wood.jpg", false);
     createTexture(texture_sky, "../src/include/space.png", true);
 
-    // tell opengl for each sampler to which texture unit it belongs to (only has to be done once)
+    // Tell opengl for each sampler to which texture unit it belongs to (only has to be done once)
     defaultShader.use();
     defaultShader.setInt("texture_container", 0);
     defaultShader.setInt("texture_face", 1);
@@ -253,7 +253,7 @@ int main(){
     // Wireframe-only
 //    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-    // render loop
+    // Render loop
     while (!glfwWindowShouldClose(window)){
         float currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
@@ -264,18 +264,18 @@ int main(){
         // Handle jumps
         playerJump(currentFrame);
 
-        // render
+        // Render
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // activate shader
+        // Activate shader
         defaultShader.use();
 
-        // pass projection matrix to shader (note that in this case it could change every frame)
+        // Pass projection matrix to shader (note that in this case it could change every frame)
         glm::mat4 projection = glm::perspective(glm::radians(fov), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
         defaultShader.setMat4("projection", projection);
 
-        // camera/view transformation
+        // Camera/view transformation
         glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
         defaultShader.setMat4("view", view);
 
@@ -346,7 +346,7 @@ int main(){
 //        renderObject(3, texture_wood, model, defaultShader, 36, glm::vec3(20.0f, 1.0f, 0.0f), 1.0f);
 //        renderObject(3, texture_wood, model, defaultShader, 36, glm::vec3(-20.0f, 1.0f, 0.0f), 1.0f);
 
-        // render the loaded model
+        // Render the loaded model
         glActiveTexture(GL_TEXTURE0);
 
         model = glm::mat4(1.0f);

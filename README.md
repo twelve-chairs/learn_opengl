@@ -1,1 +1,1 @@
-![](https://github.com/twelvechairssoftware/learn_opengl/raw/master/Dec-25-2021%2019-55-47.gif)
+![](https://github.com/twelvechairssoftware/learn_opengl/raw/master/Dec-26-2021 21-16-38.gif)
