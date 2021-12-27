@@ -221,6 +221,7 @@ int main(){
     Model plane("../src/include/plane.obj");
     Model cube("../src/include/cube.obj");
     Model grass("../src/include/grass/trava.obj");
+    Model unicorn("../src/include/unicorn.obj");
 
     // Build collection
     std::vector<Model> grassObjects(grassCount, grass);
@@ -349,20 +350,6 @@ int main(){
         // Render the loaded model
         glActiveTexture(GL_TEXTURE0);
 
-        model = glm::mat4(1.0f);
-        model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
-        model = glm::rotate(model, glm::radians(-1.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-        model = glm::translate(model, glm::vec3(0.5f, 2.0f, 0.8f));
-        defaultShader.setMat4("model", model);
-        guitar.Draw(defaultShader);
-
-        glBindTexture(GL_TEXTURE_2D, texture_sky);
-        model = glm::mat4(1.0f);
-        model = glm::scale(model, glm::vec3(50.0f, 50.0f, 50.0f));
-        model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
-        defaultShader.setMat4("model", model);
-        cube.Draw(defaultShader);
-
         glBindTexture(GL_TEXTURE_2D, texture_grass);
         model = glm::mat4(1.0f);
         model = glm::scale(model, glm::vec3(20.0f, 20.0f, 20.0f));
@@ -380,6 +367,29 @@ int main(){
         }
         glDisable(GL_BLEND);
 
+
+        model = glm::mat4(1.0f);
+        model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
+        model = glm::rotate(model, glm::radians(-1.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+        model = glm::translate(model, glm::vec3(0.5f, 2.0f, 0.8f));
+        defaultShader.setMat4("model", model);
+        guitar.Draw(defaultShader);
+
+        glBindTexture(GL_TEXTURE_2D, texture_sky);
+        model = glm::mat4(1.0f);
+        model = glm::scale(model, glm::vec3(50.0f, 50.0f, 50.0f));
+        model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
+        defaultShader.setMat4("model", model);
+        cube.Draw(defaultShader);
+
+        glBindTexture(GL_TEXTURE_2D, texture_wood);
+        model = glm::mat4(1.0f);
+        model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
+        model = glm::translate(model, glm::vec3(1.5f, 0.0f, 2.8f));
+        defaultShader.setMat4("model", model);
+        unicorn.Draw(defaultShader);
+
+        glBindTexture(GL_TEXTURE_2D, 0);
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
