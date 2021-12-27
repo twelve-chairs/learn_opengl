@@ -220,7 +220,7 @@ int main(){
     stbi_set_flip_vertically_on_load(false);
     Model plane("../src/include/plane.obj");
     Model cube("../src/include/cube.obj");
-    Model grass("../src/include/91-trava-kolosok/trava.obj");
+    Model grass("../src/include/grass/trava.obj");
 
     // Build collection
     std::vector<Model> grassObjects(grassCount, grass);
@@ -358,7 +358,7 @@ int main(){
 
         glBindTexture(GL_TEXTURE_2D, texture_sky);
         model = glm::mat4(1.0f);
-        model = glm::scale(model, glm::vec3(40.0f, 40.0f, 40.0f));
+        model = glm::scale(model, glm::vec3(50.0f, 50.0f, 50.0f));
         model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
         defaultShader.setMat4("model", model);
         cube.Draw(defaultShader);
