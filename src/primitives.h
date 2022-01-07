@@ -15,28 +15,28 @@
 //        planeMax, floorMin , -planeMax, planeMax/2, planeMax
 //};
 
-const float scale = 1.0f;
-
-float pyramidVertices[] = {
-        -2.0f, -2.0f, 2.0f, scale, 0.0f,
-        2.0f, -2.0f, 2.0f, 0.0f, 0.0f,
-        0.0f, 2.0f, 0.0f, scale/ 2, scale -0.1f, // front face
-        2.0f, -2.0f, 2.0f, scale, 0.0f,
-        2.0f, -2.0f, -2.0f, 0.0f, 0.0f,
-        0.0f, 2.0f, 0.0f, scale/ 2, scale-0.1f, // right face
-        2.0f,-2.0f, -2.0f, scale, 0.0f,
-        -2.0f, -2.0f, -2.0f, 0.0f, 0.0f,
-        0.0f, 2.0f, 0.0f, scale/ 2, scale-0.1f, // back face
-        -2.0f, -2.0f, -2.0f ,scale, 0.0f,
-        -2.0f, -2.0f, 2.0f, 0.0f, 0.0f,
-        0.0f, 2.0f, 0.0f, scale/ 2, scale-0.1f, // left face
-        -2.0f, -2.0f, -2.0f, scale, 0.0f,
-        2.0f, -2.0f, 2.0f, 0.0f, 0.0f,
-        -2.0f, -2.0f, 2.0f, scale/ 2, scale, // base – left front
-        2.0f, -2.0f, 2.0f, scale, 0.0f,
-        -2.0f, -2.0f, -2.0f, 0.0f, 0.0f,
-        2.0f, -2.0f, -2.0f, scale/ 2, scale // base – right back
-};
+//const float scale = 1.0f;
+//
+//float pyramidVertices[] = {
+//        -2.0f, -2.0f, 2.0f, scale, 0.0f,
+//        2.0f, -2.0f, 2.0f, 0.0f, 0.0f,
+//        0.0f, 2.0f, 0.0f, scale/ 2, scale -0.1f, // front face
+//        2.0f, -2.0f, 2.0f, scale, 0.0f,
+//        2.0f, -2.0f, -2.0f, 0.0f, 0.0f,
+//        0.0f, 2.0f, 0.0f, scale/ 2, scale-0.1f, // right face
+//        2.0f,-2.0f, -2.0f, scale, 0.0f,
+//        -2.0f, -2.0f, -2.0f, 0.0f, 0.0f,
+//        0.0f, 2.0f, 0.0f, scale/ 2, scale-0.1f, // back face
+//        -2.0f, -2.0f, -2.0f ,scale, 0.0f,
+//        -2.0f, -2.0f, 2.0f, 0.0f, 0.0f,
+//        0.0f, 2.0f, 0.0f, scale/ 2, scale-0.1f, // left face
+//        -2.0f, -2.0f, -2.0f, scale, 0.0f,
+//        2.0f, -2.0f, 2.0f, 0.0f, 0.0f,
+//        -2.0f, -2.0f, 2.0f, scale/ 2, scale, // base – left front
+//        2.0f, -2.0f, 2.0f, scale, 0.0f,
+//        -2.0f, -2.0f, -2.0f, 0.0f, 0.0f,
+//        2.0f, -2.0f, -2.0f, scale/ 2, scale // base – right back
+//};
 
 
 // set up vertex data (and buffer(s)) and configure vertex attributes

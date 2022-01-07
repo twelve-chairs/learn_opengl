@@ -29,6 +29,7 @@ include(${CMAKE_BINARY_DIR}/conan.cmake)
 conan_cmake_configure(REQUIRES cmake/3.21.3
         glfw/3.3.4
         glew/2.2.0
+        imgui/1.86
         glm/0.9.9.8
         stb/cci.20210713
         assimp/5.1.0
@@ -45,6 +46,7 @@ conan_cmake_install(PATH_OR_REFERENCE .
 
 find_package(glfw3 REQUIRED)
 find_package(GLEW REQUIRED)
+find_package(imgui REQUIRED)
 find_package(glm REQUIRED)
 find_package(stb REQUIRED)
 find_package(assimp REQUIRED)
@@ -54,13 +56,15 @@ find_package(spdlog REQUIRED)
 
 file(GLOB H_FILES "src/*.h")
 file(GLOB CPP_FILES "src/*.cpp")
+file(GLOB IMGUI "src/include/imgui/*.*")
 file(GLOB INCLUDE "src/include/*.*/*.*/*.*")
 
-add_executable(${PROJECT_NAME} ${H_FILES} ${CPP_FILES} ${INCLUDE})
+add_executable(${PROJECT_NAME} ${H_FILES} ${CPP_FILES} ${IMGUI}  ${INCLUDE})
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
         GLEW::GLEW
         glfw::glfw
+        imgui::imgui
         glm::glm
         stb::stb
         assimp::assimp
