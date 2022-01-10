@@ -24,8 +24,8 @@
 #include <filesystem>
 #include <chrono>
 #include <thread>
-#include "Shader.h"
-#include "Model.h"
+#include "include/helpers/Shader.h"
+#include "include/helpers/Model.h"
 #include <iostream>
 
 void framebufferSizeCallback(GLFWwindow* window, int width, int height = false);
@@ -66,7 +66,7 @@ float pitch = 0.0f;
 float fieldOfView = 45.0f;
 
 // Lighting
-glm::vec3 lightPos(-1.0f, 3.0f, 2.5f);
+glm::vec3 lightPos(0.0f, 100.0f, 0.0f);
 
 // Timing
 float deltaTime = 0.0f;	// time between current frame and last frame
@@ -79,8 +79,11 @@ const float floorMin = 0.0f;
 
 bool wireframe = false;
 
+// Models
 Model unicorn;
 Model wabbit;
+glm::vec3 unicornColorTest;
+
 
 void createTexture(GLuint& texture, const std::string& path, bool alpha){
     glGenTextures(1, &texture);
@@ -183,12 +186,11 @@ GLuint initFrameBuffer(){
     return frameBufferObject;
 }
 
+void render(Shader &shader){
 
-
+}
 
 int main(){
-    auto temp = lineArray(3.0, 3.0, -11.0, 5.0, 0.25);
-
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
@@ -199,7 +201,7 @@ int main(){
 #endif
 
     // glfw window creation
-    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "TwelveChairs", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "twelvechairs", NULL, NULL);
     if (window == NULL){
         spdlog::error("Failed to create GLFW window");
         glfwTerminate();
@@ -216,7 +218,6 @@ int main(){
     glEnable(GL_MULTISAMPLE);
 
     glEnable(GL_DEPTH_TEST);
-
     glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 
     // Load GLEW so it configures OpenGL
@@ -227,11 +228,16 @@ int main(){
 
     // Build and compile our shader program
     Shader defaultShader("../src/default.vert", "../src/default.frag");
+    Shader unicornShader("../src/unicorn.vert", "../src/unicorn.frag");
     Shader lightingShader("../src/light.vert", "../src/light.frag");
     Shader grassShaderInstanced("../src/grass.vert", "../src/grass.frag");
+    Shader simpleDepthShader("../src/shadow_mapping_depth.vert", "../src/shadow_mapping_depth.frag");
 
+    // Update global models (TODO: move out of global scope)
     unicorn.getModel("../src/include/assets/unicorn/unicorn.obj");
     wabbit.getModel("../src/include/assets/wabbit/wabbit.obj");
+
+    // Instantiate other models
     Model grass("../src/include/assets/grass/trava.obj");
     Model plane("../src/include/assets/primitives/plane.obj");
     Model cube("../src/include/assets/primitives/cube.obj");
@@ -244,24 +250,13 @@ int main(){
     for (unsigned int n = 0; n < cubeCount; n++){
         cubePositions.emplace_back(
                 glm::linearRand(-planeMax, planeMax),
-                glm::linearRand(1.0f, 3.0f),
+                glm::linearRand(2.5f, 6.0f),
                 glm::linearRand(-planeMax, planeMax)
         );
     }
 
-    int pyramidCount = 8;
-    glm::vec3 pyramidPositions[] = {
-            glm::vec3(-planeMax, 0.5f, -planeMax),
-            glm::vec3(planeMax, 0.5f, -planeMax),
-            glm::vec3(0.0f, 0.5f, -planeMax),
-            glm::vec3(-planeMax, 0.5f, 0.0f),
-            glm::vec3(0.0f, 0.5f, planeMax),
-            glm::vec3(planeMax, 0.5f, 0.0f),
-            glm::vec3(-planeMax, 0.5f, planeMax),
-            glm::vec3(planeMax, 0.5f, planeMax)
-    };
-
-    unsigned int grassCount = 1500;
+    // Generate grass objects for GPU instancing
+    unsigned int grassCount = 1200;
     glm::mat4 *modelMatrices;
     modelMatrices = new glm::mat4[grassCount];
     for (unsigned int i = 0; i < grassCount; i++){
@@ -281,6 +276,8 @@ int main(){
     stbi_set_flip_vertically_on_load(false);
     unicorn.scale = glm::vec3(0.35f, 0.35f, 0.35f);
     unicorn.rotationDegrees = 180.0f;
+
+    wabbit.position = glm::vec3(-20.0f, 0.0f, 20.0f);
 
     // Load and create a texture
     unsigned int texture_container, texture_face, texture_grass, texture_mystery, texture_bricks, texture_rock, texture_wood, texture_sky, texture_skybox, texture_clouds, texture_skydome, texture_fur;
@@ -316,6 +313,27 @@ int main(){
     auto imguiMainBackgroundColor = ImVec4(1.0f, 1.0f, 1.0f, 1.00f);
 
     initFrameBuffer();
+
+    // configure depth map FBO
+    // -----------------------
+    const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
+    unsigned int depthMapFBO;
+    glGenFramebuffers(1, &depthMapFBO);
+    // create depth texture
+    unsigned int depthMap;
+    glGenTextures(1, &depthMap);
+    glBindTexture(GL_TEXTURE_2D, depthMap);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    // attach depth texture as FBO's depth buffer
+    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
+    glDrawBuffer(GL_NONE);
+    glReadBuffer(GL_NONE);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     // shader configuration
     // --------------------
@@ -362,7 +380,7 @@ int main(){
 
         glBindVertexArray(0);
     }
-
+    float offset = 0.05f;
 
     // Render loop
     while (!glfwWindowShouldClose(window)){
@@ -376,19 +394,51 @@ int main(){
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        // 1. render depth of scene to texture (from light's perspective)
+        // --------------------------------------------------------------
+        glm::mat4 lightProjection, lightView;
+        glm::mat4 lightSpaceMatrix;
+        float near_plane = 1.0f, far_plane = 7.5f;
+        lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
+        lightView = glm::lookAt(lightPos, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
+        lightSpaceMatrix = lightProjection * lightView;
+        // render scene from light's point of view
+        simpleDepthShader.use();
+        simpleDepthShader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
+
+        glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+        glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+        glClear(GL_DEPTH_BUFFER_BIT);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texture_grass);
+//        render(simpleDepthShader);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+        // reset viewport
+        glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+
         // Activate shader when setting uniforms/drawing objects
         defaultShader.use();
         defaultShader.setVec3("light.position", lightPos);
         defaultShader.setVec3("viewPos", cameraPos);
-
         // Light properties
         defaultShader.setVec3("light.ambient", glm::vec3(lightAmbient));
         defaultShader.setVec3("light.diffuse", glm::vec3(lightDiffuse));
         defaultShader.setVec3("light.specular", glm::vec3(lightSpecular));
-
         // Material properties
         defaultShader.setVec3("material.specular", glm::vec3(materialSpecular));
         defaultShader.setFloat("material.shininess", materialShine);
+
+        // Activate shader when setting uniforms/drawing objects
+        unicornShader.use();
+        unicornShader.setVec3("lightPos", lightPos);
+        unicornShader.setVec3("viewPos", cameraPos);
+        // Light properties
+        unicornShader.setVec3("light.ambient", glm::vec3(lightAmbient));
+        unicornShader.setVec3("light.diffuse", glm::vec3(lightDiffuse));
+        unicornShader.setVec3("light.specular", glm::vec3(lightSpecular));
 
         // Start the Dear ImGui frame
         ImGui_ImplOpenGL3_NewFrame();
@@ -445,6 +495,7 @@ int main(){
         SCR_HEIGHT = frameBufferSize.y / 2;
 
         try {
+            glEnable(GL_FRAMEBUFFER_SRGB);
             glBindTexture(GL_TEXTURE_2D, textureColorBuffer);
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, frameBufferSize.x, frameBufferSize.y, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -480,9 +531,14 @@ int main(){
             lightingShader.setMat4("projection", projection);
             lightingShader.setMat4("view", view);
 
+            unicornShader.use();
+            unicornShader.setMat4("projection", projection);
+            unicornShader.setMat4("view", view);
+
             defaultShader.use();
             defaultShader.setMat4("projection", projection);
             defaultShader.setMat4("view", view);
+
 
             // Render the loaded models
             glBindTexture(GL_TEXTURE_2D, texture_grass);
@@ -490,7 +546,6 @@ int main(){
             model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
             model = glm::scale(model, glm::vec3(planeMax, 10.0f, planeMax));
             defaultShader.setMat4("model", model);
-            //defaultShader.setInt("material.diffuse", texture_grass);
             plane.Draw(defaultShader);
 
             glBindTexture(GL_TEXTURE_2D, texture_mystery);
@@ -501,7 +556,6 @@ int main(){
                 model = glm::rotate(model, glm::radians(angle), cubePositions[n]);
                 model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
                 defaultShader.setMat4("model", model);
-//                defaultShader.setInt("material.diffuse", texture_mystery);
                 cube.Draw(defaultShader);
             }
 
@@ -514,37 +568,76 @@ int main(){
             sphere.Draw(defaultShader);
 
 
-
             glBindTexture(GL_TEXTURE_2D, texture_fur);
             defaultShader.use();
             model = glm::mat4(1.0f);
-//            model = glm::translate(model, glm::vec3(wabbit.line[(int)currentFrame][0], 0.0f, wabbit.line[(int)currentFrame][1]));
+            if (wabbit.position.x >= planeMax || wabbit.position.z >= planeMax){
+                offset = -offset;
+            }
+            if (wabbit.position.x <= -planeMax || wabbit.position.z <= -planeMax){
+                offset = abs(offset);
+            }
+
+            // Wacky Wabbit Antics
+            float amplitude = 0.3f;
+            float speed = 7.0f;
+            float degrees = 0.0f;
+
+            float x = wabbit.position.x + (offset);
+            float y = amplitude * (glm::sin(speed * x)) + 0.2f;
+            float z = 10.0f * sin(0.25f * x);
+
+            model = glm::translate(model, glm::vec3(x, y, z));
+            if (offset > 0){
+                degrees = 90.0f;
+                if (wabbit.position.z > z){
+                    degrees += 45.0f;
+                }
+                else {
+                    degrees -= 45.0f;
+                }
+            }
+            else{
+                degrees = -90.0f;
+                if (wabbit.position.z > z){
+                    degrees -= 45.0f;
+                }
+                else {
+                    degrees += 45.0f;
+                }
+            }
+            wabbit.position = glm::vec3(x, y, z);
+
+            model = glm::rotate(model, glm::radians(degrees), glm::vec3(0.0f, 1.0f, 0.0f));
+            model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
             model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
             defaultShader.setMat4("model", model);
             wabbit.Draw(defaultShader);
 
 
-            defaultShader.use();
+            unicornShader.use();
             model = glm::mat4(1.0f);
             model = glm::translate(model, unicorn.position);
             model = glm::rotate(model, glm::radians(unicorn.rotationDegrees), unicorn.rotationAxis);
             model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
             model = glm::scale(model, unicorn.scale);
-            defaultShader.setMat4("model", model);
-//            defaultShader.setInt("material.diffuse", texture_mystery);
+            unicornShader.setMat4("model", model);
+            unicornShader.setVec3("lightPos", lightPos);
+            unicornShader.setVec3("lightColor", glm::vec3(1.0f, 1.0f, 1.0f));
+            unicornShader.setVec3("objectColor", unicornColorTest);
             unicorn.Draw(defaultShader);
 
 
-            grassShaderInstanced.use();
-            grassShaderInstanced.setInt("texture_diffuse1", 0);
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, grass.textures_loaded[0].id); // note: we also made the textures_loaded vector public (instead of private) from the model class.
-            for (unsigned int i = 0; i < grass.meshes.size(); i++)
-            {
-                glBindVertexArray(grass.meshes[i].VAO);
-                glDrawElementsInstanced(GL_TRIANGLES, grass.meshes[i].indices.size(), GL_UNSIGNED_INT, 0, grassCount);
-                glBindVertexArray(0);
-            }
+//            grassShaderInstanced.use();
+//            grassShaderInstanced.setInt("texture_diffuse1", 0);
+//            glActiveTexture(GL_TEXTURE0);
+//            glBindTexture(GL_TEXTURE_2D, grass.textures_loaded[0].id); // note: we also made the textures_loaded vector public (instead of private) from the model class.
+//            for (unsigned int i = 0; i < grass.meshes.size(); i++)
+//            {
+//                glBindVertexArray(grass.meshes[i].VAO);
+//                glDrawElementsInstanced(GL_TRIANGLES, grass.meshes[i].indices.size(), GL_UNSIGNED_INT, 0, grassCount);
+//                glBindVertexArray(0);
+//            }
 
 
 //             Draw the lamp object
@@ -558,6 +651,8 @@ int main(){
             // ============================================================================================================================
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
             ImGui::Image(reinterpret_cast<ImTextureID>(textureColorBuffer), frameBufferSize, ImVec2(0, 1), ImVec2(1, 0));
+            glDisable(GL_FRAMEBUFFER_SRGB);
+
         }
         catch (std::exception &e){
             spdlog::error("ImGui::Image: {}", e.what());
@@ -567,7 +662,7 @@ int main(){
 
         // Stats window
         ImGui::SetNextWindowPos(ImVec2(0, 20), ImGuiCond_Once);
-        ImGui::SetNextWindowSize(ImVec2(250, 70), ImGuiCond_Always);
+        ImGui::SetNextWindowSize(ImVec2(220, 50), ImGuiCond_Always);
         flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings;
         ImGui::Begin("Stats", NULL, flags);
         ImGui::Text(" %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
@@ -581,18 +676,28 @@ int main(){
 
         // testLighting window
         ImGui::SetNextWindowPos( ImVec2(0, 80), ImGuiCond_Once);
-        ImGui::SetNextWindowSize(ImVec2(250, 250), ImGuiCond_Always);
+        ImGui::SetNextWindowSize(ImVec2(220, 300), ImGuiCond_Always);
         ImGui::Begin("testLighting", NULL, flags);
-        ImGui::SliderFloat("lightAmbient", &lightAmbient, 0.0, 1.0);
-        ImGui::SliderFloat("lightDiffuse", &lightDiffuse, 0.0, 1.0);
-        ImGui::SliderFloat("lightSpecular", &lightSpecular, 0.0, 1.0);
-        ImGui::SliderFloat("materialSpecular", &materialSpecular, 0.0, 1.0);
-        ImGui::SliderFloat("materialShine", &materialShine, 0.0, 100.0);
+        ImGui::SliderFloat("lAmbient", &lightAmbient, 0.0, 1.0);
+        ImGui::SliderFloat("lDiffuse", &lightDiffuse, 0.0, 1.0);
+        ImGui::SliderFloat("lSpecular", &lightSpecular, 0.0, 1.0);
+        ImGui::SliderFloat("mSpecular", &materialSpecular, 0.0, 1.0);
+        ImGui::SliderFloat("mShine", &materialShine, 0.0, 100.0);
         ImGui::SliderFloat("light.x", &lightPos.x, -planeMax - 10, planeMax + 10);
         ImGui::SliderFloat("light.y", &lightPos.y, -1, 300);
         ImGui::SliderFloat("light.z", &lightPos.z, -planeMax - 10, planeMax + 10);
+        ImGui::SliderFloat("camera.x", &cameraPos.x, -planeMax - 10, planeMax + 10);
+        ImGui::SliderFloat("camera.y", &cameraPos.y, -1, 300);
+        ImGui::SliderFloat("camera.z", &cameraPos.z, -planeMax - 10, planeMax + 10);
         ImGui::Checkbox("Wireframe", &wireframe);
         ImGui::End();
+
+        ImGui::SetNextWindowPos( ImVec2(0, 390), ImGuiCond_Once);
+        ImGui::SetNextWindowSize(ImVec2(220, 160), ImGuiCond_Always);
+        ImGui::Begin("Unicorn Color", NULL, flags);
+        ImGui::ColorPicker4("Color", (float*)&unicornColorTest, ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_DisplayRGB, NULL);
+        ImGui::End();
+
 
         // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
         if (show_demo_window) {
@@ -647,7 +752,7 @@ void processInput(GLFWwindow *window){
         cameraPos -= offset;
         unicorn.position -= offset;
         unicorn.rotationDegrees = 360.0f;
-        fieldOfView = 55;
+        fieldOfView = 60;
     }
     if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
         auto offset = glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
@@ -694,11 +799,11 @@ void processInput(GLFWwindow *window){
     if (cameraPos.x < -planeMax){
         cameraPos.x = -planeMax;
     }
-    if (cameraPos.z > planeMax + (1 / unicorn.scale.x) * 2.0f){
-        cameraPos.z = planeMax + (1 / unicorn.scale.x) * 2.0f;
+    if (cameraPos.z > planeMax + 8.0f){
+        cameraPos.z = planeMax + 8.0f;
     }
-    if (cameraPos.z < -planeMax + (1 / unicorn.scale.x) * 2.0f){
-        cameraPos.z = -planeMax + (1 / unicorn.scale.x) * 2.0f;
+    if (cameraPos.z < -planeMax + 8.0f){
+        cameraPos.z = -planeMax + 8.0f;
     }
 
     if (unicorn.position.x > planeMax){
