@@ -564,7 +564,7 @@ int main(){
             glBindTexture(GL_TEXTURE_2D, texture_skydome);
             model = glm::mat4(1.0f);
             model = glm::rotate(model, currentFrame * 0.01f, glm::vec3(0.0f, 1.0f, 0.0f));
-            model = glm::scale(model, glm::vec3(220.0f, 220.0f, 220.0f));
+            model = glm::scale(model, glm::vec3(200.0f, 200.0f, 200.0f));
             model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
             defaultShader.setMat4("model", model);
             sphere.Draw(defaultShader);
