@@ -227,11 +227,13 @@ int main(){
     }
 
     // Build and compile our shader program
-    Shader defaultShader("../src/default.vert", "../src/default.frag");
-    Shader unicornShader("../src/unicorn.vert", "../src/unicorn.frag");
-    Shader lightingShader("../src/light.vert", "../src/light.frag");
-    Shader grassShaderInstanced("../src/grass.vert", "../src/grass.frag");
-    Shader simpleDepthShader("../src/shadow_mapping_depth.vert", "../src/shadow_mapping_depth.frag");
+    Shader defaultShader("../src/include/shaders/default.vert", "../src/include/shaders/default.frag");
+    Shader unicornBodyShader("../src/include/shaders/unicorn_body.vert", "../src/include/shaders/unicorn_body.frag");
+    Shader unicornManeShader("../src/include/shaders/unicorn_mane.vert", "../src/include/shaders/unicorn_mane.frag");
+    Shader unicornTailShader("../src/include/shaders/unicorn_tail.vert", "../src/include/shaders/unicorn_tail.frag");
+    Shader lightingShader("../src/include/shaders/light.vert", "../src/include/shaders/light.frag");
+    Shader grassShaderInstanced("../src/include/shaders/grass.vert", "../src/include/shaders/grass.frag");
+    Shader simpleDepthShader("../src/include/shaders/shadow_mapping_depth.vert", "../src/include/shaders/shadow_mapping_depth.frag");
 
     // Update global models (TODO: move out of global scope)
     unicorn.getModel("../src/include/assets/unicorn/unicorn.obj");
@@ -432,13 +434,13 @@ int main(){
         defaultShader.setFloat("material.shininess", materialShine);
 
         // Activate shader when setting uniforms/drawing objects
-        unicornShader.use();
-        unicornShader.setVec3("lightPos", lightPos);
-        unicornShader.setVec3("viewPos", cameraPos);
+        unicornBodyShader.use();
+        unicornBodyShader.setVec3("lightPos", lightPos);
+        unicornBodyShader.setVec3("viewPos", cameraPos);
         // Light properties
-        unicornShader.setVec3("light.ambient", glm::vec3(lightAmbient));
-        unicornShader.setVec3("light.diffuse", glm::vec3(lightDiffuse));
-        unicornShader.setVec3("light.specular", glm::vec3(lightSpecular));
+        unicornBodyShader.setVec3("light.ambient", glm::vec3(lightAmbient));
+        unicornBodyShader.setVec3("light.diffuse", glm::vec3(lightDiffuse));
+        unicornBodyShader.setVec3("light.specular", glm::vec3(lightSpecular));
 
         // Start the Dear ImGui frame
         ImGui_ImplOpenGL3_NewFrame();
@@ -531,9 +533,9 @@ int main(){
             lightingShader.setMat4("projection", projection);
             lightingShader.setMat4("view", view);
 
-            unicornShader.use();
-            unicornShader.setMat4("projection", projection);
-            unicornShader.setMat4("view", view);
+            unicornBodyShader.use();
+            unicornBodyShader.setMat4("projection", projection);
+            unicornBodyShader.setMat4("view", view);
 
             defaultShader.use();
             defaultShader.setMat4("projection", projection);
@@ -615,16 +617,16 @@ int main(){
             wabbit.Draw(defaultShader);
 
 
-            unicornShader.use();
+            unicornBodyShader.use();
             model = glm::mat4(1.0f);
             model = glm::translate(model, unicorn.position);
             model = glm::rotate(model, glm::radians(unicorn.rotationDegrees), unicorn.rotationAxis);
             model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
             model = glm::scale(model, unicorn.scale);
-            unicornShader.setMat4("model", model);
-            unicornShader.setVec3("lightPos", lightPos);
-            unicornShader.setVec3("lightColor", glm::vec3(1.0f, 1.0f, 1.0f));
-            unicornShader.setVec3("objectColor", unicornColorTest);
+            unicornBodyShader.setMat4("model", model);
+            unicornBodyShader.setVec3("lightPos", lightPos);
+            unicornBodyShader.setVec3("lightColor", glm::vec3(1.0f, 1.0f, 1.0f));
+            unicornBodyShader.setVec3("objectColor", unicornColorTest);
             unicorn.Draw(defaultShader);
 
 
