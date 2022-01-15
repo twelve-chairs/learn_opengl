@@ -27,9 +27,11 @@
 #include "include/helpers/Shader.h"
 #include "include/helpers/Model.h"
 #include <iostream>
+#include <string>
+#include <regex>
 
 void framebufferSizeCallback(GLFWwindow* window, int width, int height = false);
-void processInput(GLFWwindow *window);
+void processInput(GLFWwindow *window, auto &models);
 void mouseCallback(GLFWwindow* window, double xpos, double ypos);
 void scrollCallback(GLFWwindow* window, double xoffset, double yoffset);
 
@@ -77,11 +79,16 @@ float jumpStart = 0.0f;
 const float planeMax = 20.0f;
 const float floorMin = 0.0f;
 
+int cubeCount = 10;
+std::vector<glm::vec3> cubePositions;
+
+float offset = 0.05f;
+
 bool wireframe = false;
 
 // Models
-Model unicorn;
-Model wabbit;
+//Model unicorn;
+//Model wabbit;
 glm::vec3 unicornColorTest;
 
 
@@ -138,7 +145,7 @@ void renderObject(int vboID, int textureID, glm::mat4 model, Shader& shader, int
     glDrawArrays(GL_TRIANGLES, 0, points);
 }
 
-void playerJump(float& currentFrame){
+void playerJump(float& currentFrame, auto &models){
     float floorOffset = 1.0f;
     float amplitude = 0.75f;
     float speed = 6.0f;
@@ -151,7 +158,7 @@ void playerJump(float& currentFrame){
         float y = amplitude * (glm::sin(speed * x)) + 1.0;
         if (y >= playerView) {
             cameraPos.y = y + floorOffset;
-            unicorn.position.y = y;
+            models.at("unicorn/unicorn.obj").position.y = y;
         }
         else {
             jump = false;
@@ -186,8 +193,165 @@ GLuint initFrameBuffer(){
     return frameBufferObject;
 }
 
-void render(Shader &shader){
+void renderGrass(){
+//            grassShaderInstanced.use();
+//            grassShaderInstanced.setInt("texture_diffuse1", 0);
+//            glActiveTexture(GL_TEXTURE0);
+//            glBindTexture(GL_TEXTURE_2D, grass.textures_loaded[0].id); // note: we also made the textures_loaded vector public (instead of private) from the model class.
+//            for (unsigned int i = 0; i < grass.meshes.size(); i++)
+//            {
+//                glBindVertexArray(grass.meshes[i].VAO);
+//                glDrawElementsInstanced(GL_TRIANGLES, grass.meshes[i].indices.size(), GL_UNSIGNED_INT, 0, grassCount);
+//                glBindVertexArray(0);
+//            }
+}
 
+void renderUnicorn(Shader &shader, auto &models, auto &textures){
+    shader.use();
+    glm::mat4 model = glm::mat4(1.0f);
+    model = glm::translate(model, models.at("unicorn/unicorn.obj").position);
+    model = glm::rotate(model, glm::radians(models.at("unicorn/unicorn.obj").rotationDegrees), models.at("unicorn/unicorn.obj").rotationAxis);
+    model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
+    model = glm::scale(model, models.at("unicorn/unicorn.obj").scale);
+    shader.setMat4("model", model);
+    shader.setVec3("lightPos", lightPos);
+    shader.setVec3("lightColor", glm::vec3(1.0f, 1.0f, 1.0f));
+    shader.setVec3("objectColor", unicornColorTest);
+    models.at("unicorn/unicorn.obj").Draw(shader);
+}
+
+void renderWabbit(Shader &shader, auto &models, auto &textures){
+    shader.use();
+//    glBindTexture(GL_TEXTURE_2D, texture_fur);
+
+    shader.use();
+    glm::mat4 model = glm::mat4(1.0f);
+    if (models.at("wabbit/wabbit.obj").position.x >= planeMax || models.at("wabbit/wabbit.obj").position.z >= planeMax){
+        offset = -offset;
+    }
+    if (models.at("wabbit/wabbit.obj").position.x <= -planeMax || models.at("wabbit/wabbit.obj").position.z <= -planeMax){
+        offset = abs(offset);
+    }
+
+    // Wacky Wabbit Antics
+    float amplitude = 0.3f;
+    float speed = 7.0f;
+    float degrees = 0.0f;
+
+    float x = models.at("wabbit/wabbit.obj").position.x + (offset);
+    float y = amplitude * (glm::sin(speed * x)) + 0.2f;
+    float z = 10.0f * sin(0.25f * x);
+
+    model = glm::translate(model, glm::vec3(x, y, z));
+    if (offset > 0){
+        degrees = 90.0f;
+        if (models.at("wabbit/wabbit.obj").position.z > z){
+            degrees += 45.0f;
+        }
+        else {
+            degrees -= 45.0f;
+        }
+    }
+    else{
+        degrees = -90.0f;
+        if (models.at("wabbit/wabbit.obj").position.z > z){
+            degrees -= 45.0f;
+        }
+        else {
+            degrees += 45.0f;
+        }
+    }
+    models.at("wabbit/wabbit.obj").position = glm::vec3(x, y, z);
+
+    model = glm::rotate(model, glm::radians(degrees), glm::vec3(0.0f, 1.0f, 0.0f));
+    model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
+    model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
+    shader.setMat4("model", model);
+    models.at("wabbit/wabbit.obj").Draw(shader);
+}
+
+void renderPlane(Shader &shader, auto &mesh, auto &texture){
+    shader.use();
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glm::mat4 model = glm::mat4(1.0f);
+    model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
+    model = glm::scale(model, glm::vec3(planeMax, 10.0f, planeMax));
+    shader.setMat4("model", model);
+    mesh.Draw(shader);
+}
+
+void renderMysteryCubes(Shader &shader, auto &mesh, auto &count, auto &positions, auto &texture, auto &currentFrame){
+    shader.use();
+    glBindTexture(GL_TEXTURE_2D, texture);
+    for (unsigned int n = 0; n < count; n++) {
+        glm::mat4 model = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
+        float angle = 20.0f * currentFrame * ((float)n + 1);
+        model = glm::translate(model, positions[n]);
+        model = glm::rotate(model, glm::radians(angle), positions[n]);
+        model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
+        shader.setMat4("model", model);
+        mesh.Draw(shader);
+    }
+}
+
+void renderSkyDome(Shader &shader, auto &mesh, auto &texture, auto &currentFrame) {
+    shader.use();
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glm::mat4 model = glm::mat4(1.0f);
+    model = glm::rotate(model, currentFrame * 0.01f, glm::vec3(0.0f, 1.0f, 0.0f));
+    model = glm::scale(model, glm::vec3(200.0f, 200.0f, 200.0f));
+    model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
+    shader.setMat4("model", model);
+    mesh.Draw(shader);
+}
+
+void renderLamp(Shader &shader){
+    //             Draw the lamp object
+    glActiveTexture(GL_TEXTURE0);
+    shader.use();
+    glm::mat4 model = glm::mat4(1.0f);
+    model = glm::translate(model, glm::vec3(lightPos.x, lightPos.y, lightPos.z));
+    shader.setMat4("model", model);
+}
+
+void render(auto &shaders, auto &models, auto &textures, auto &currentFrame){
+    // Render
+    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glActiveTexture(GL_TEXTURE0);
+
+    // Pass projection matrix to shader
+    glm::mat4 projection = glm::perspective(glm::radians(fieldOfView), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+    // Camera/view transformation
+    glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+    // Model. Make sure to initialize matrix to identity matrix first
+    glm::mat4 model = glm::mat4(1.0f);
+
+    // view/projection transformations
+    shaders.at("grass").use();
+    shaders.at("grass").setMat4("projection", projection);
+    shaders.at("grass").setMat4("view", view);
+
+    shaders.at("light").use();
+    shaders.at("light").setMat4("projection", projection);
+    shaders.at("light").setMat4("view", view);
+
+    shaders.at("unicornBody").use();
+    shaders.at("unicornBody").setMat4("projection", projection);
+    shaders.at("unicornBody").setMat4("view", view);
+
+    shaders.at("default").use();
+    shaders.at("default").setMat4("projection", projection);
+    shaders.at("default").setMat4("view", view);
+
+
+    // Render the loaded models
+    renderPlane(shaders.at("default"), models.at("primitives/plane.obj"), textures.at("grass.png"));
+    renderMysteryCubes(shaders.at("default"), models.at("primitives/cube.obj"), cubeCount, cubePositions, textures.at("mario_mystery.png"), currentFrame);
+    renderSkyDome(shaders.at("default"), models.at("primitives/sphere.obj"), textures.at("skydome.jpeg"), currentFrame);
+    renderWabbit(shaders.at("default"), models, textures);
+    renderUnicorn(shaders.at("unicornBody"), models, textures);
+    renderLamp(shaders.at("light"));
 }
 
 int main(){
@@ -226,29 +390,60 @@ int main(){
         return 0;
     }
 
-    // Build and compile our shader program
-    Shader defaultShader("../src/include/shaders/default.vert", "../src/include/shaders/default.frag");
-    Shader unicornBodyShader("../src/include/shaders/unicorn_body.vert", "../src/include/shaders/unicorn_body.frag");
-    Shader unicornManeShader("../src/include/shaders/unicorn_mane.vert", "../src/include/shaders/unicorn_mane.frag");
-    Shader unicornTailShader("../src/include/shaders/unicorn_tail.vert", "../src/include/shaders/unicorn_tail.frag");
-    Shader lightingShader("../src/include/shaders/light.vert", "../src/include/shaders/light.frag");
-    Shader grassShaderInstanced("../src/include/shaders/grass.vert", "../src/include/shaders/grass.frag");
-    Shader simpleDepthShader("../src/include/shaders/shadow_mapping_depth.vert", "../src/include/shaders/shadow_mapping_depth.frag");
+    // Build and compile our shader programs
+    std::vector<std::string> shaderNames = {
+            "default",
+            "unicornBody",
+            "unicornMane",
+            "unicornTail",
+            "light",
+            "grass",
+            "shadowMappingDepth"
+    };
+    std::map<std::string, Shader> shaders;
+    for (const auto& shader: shaderNames){
+        std::string vert = fmt::format("../src/include/shaders/{}.vert", shader);
+        std::string frag = fmt::format("../src/include/shaders/{}.frag", shader);
+        shaders.insert({shader, Shader(vert.c_str(), frag.c_str())});
+    }
 
-    // Update global models (TODO: move out of global scope)
-    unicorn.getModel("../src/include/assets/unicorn/unicorn.obj");
-    wabbit.getModel("../src/include/assets/wabbit/wabbit.obj");
+    // Load and create a texture
+    std::vector<std::string> textureNames = {
+            "awesomeface.png",
+            "clouds.jpeg",
+            "container.jpeg",
+            "fur.jpeg",
+            "grass.png",
+            "mario_mystery.png",
+            "rock.jpeg",
+            "skydome.jpeg",
+            "wood.jpg",
+            "space.png"
+    };
+    std::map<std::string, unsigned int> textures;
+    for (const auto &textureName : textureNames){
+        unsigned int textureId;
+        std::string path = fmt::format("../src/include/assets/textures/{}", textureName);
+        createTexture(textureId, path, path.find(".png") != string::npos ? true : false);
+        textures.insert({textureName, textureId});
+    }
 
-    // Instantiate other models
-    Model grass("../src/include/assets/grass/trava.obj");
-    Model plane("../src/include/assets/primitives/plane.obj");
-    Model cube("../src/include/assets/primitives/cube.obj");
-    Model sphere("../src/include/assets/primitives/sphere.obj");
+    std::vector<std::string> modelNames = {
+            "unicorn/unicorn.obj",
+            "wabbit/wabbit.obj",
+            "grass/trava.obj",
+            "primitives/plane.obj",
+            "primitives/cube.obj",
+            "primitives/sphere.obj"
+    };
+    std::map<std::string, Model> models;
+    for (const auto& model: modelNames){
+        std::string path = fmt::format("../src/include/assets/{}", model);
+        models.insert({model, Model(path.c_str())});
+    }
 
 
     // Static world space positions of our cubes and pyramids
-    int cubeCount = 10;
-    std::vector<glm::vec3> cubePositions;
     for (unsigned int n = 0; n < cubeCount; n++){
         cubePositions.emplace_back(
                 glm::linearRand(-planeMax, planeMax),
@@ -268,32 +463,17 @@ int main(){
                 glm::linearRand(-0.3f, -0.1f),
                 glm::linearRand(-planeMax, planeMax)
         ));
-        model = glm::rotate(model, glm::radians(unicorn.rotationDegrees), unicorn.rotationAxis);
+        model = glm::rotate(model, glm::radians(models.at("unicorn/unicorn.obj").rotationDegrees), models.at("unicorn/unicorn.obj").rotationAxis);
         model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
 
         modelMatrices[i] = model;
     }
 
-    // load models
+    // Init models
     stbi_set_flip_vertically_on_load(false);
-    unicorn.scale = glm::vec3(0.35f, 0.35f, 0.35f);
-    unicorn.rotationDegrees = 180.0f;
-
-    wabbit.position = glm::vec3(-20.0f, 0.0f, 20.0f);
-
-    // Load and create a texture
-    unsigned int texture_container, texture_face, texture_grass, texture_mystery, texture_bricks, texture_rock, texture_wood, texture_sky, texture_skybox, texture_clouds, texture_skydome, texture_fur;
-    createTexture(texture_face, "../src/include/assets/textures/awesomeface.png", true);
-    createTexture(texture_clouds, "../src/include/assets/textures/clouds.jpeg", false);
-    createTexture(texture_container, "../src/include/assets/textures/container.jpeg", false);
-    createTexture(texture_fur, "../src/include/assets/textures/fur.jpeg", false);
-    createTexture(texture_grass, "../src/include/assets/textures/grass.png", true);
-    createTexture(texture_mystery, "../src/include/assets/textures/mario_mystery.png", true);
-    createTexture(texture_bricks, "../src/include/assets/textures/mario_bricks.png", false);
-    createTexture(texture_rock, "../src/include/assets/textures/rock.jpeg", false);
-    createTexture(texture_skydome, "../src/include/assets/textures/skydome.jpeg", false);
-    createTexture(texture_wood, "../src/include/assets/textures/wood.jpg", false);
-    createTexture(texture_sky, "../src/include/assets/textures/space.png", true);
+    models.at("unicorn/unicorn.obj").scale = glm::vec3(0.35f, 0.35f, 0.35f);
+    models.at("unicorn/unicorn.obj").rotationDegrees = 180.0f;
+    models.at("wabbit/wabbit.obj").position = glm::vec3(-20.0f, 0.0f, 20.0f);
 
 
     // Setup Dear ImGui context
@@ -339,16 +519,15 @@ int main(){
 
     // shader configuration
     // --------------------
-    lightingShader.use();
-    lightingShader.setInt("material.diffuse", 0);
-
+    shaders.at("light").use();
+    shaders.at("light").setInt("material.diffuse", 0);
 
     static float lightAmbient = 1.0f;
-    static float lightDiffuse = 0.15f;
-    static float lightSpecular = 0.5f;
+    static float lightDiffuse = 0.0f;
+    static float lightSpecular = 0.0f;
 
     static float materialSpecular = 0.5f;
-    static float materialShine = 0.7f;
+    static float materialShine = 0.1f;
 
 
     // configure instanced array
@@ -362,8 +541,8 @@ int main(){
     // note: we're cheating a little by taking the, now publicly declared, VAO of the model's mesh(es) and adding new vertexAttribPointers
     // normally you'd want to do this in a more organized fashion, but for learning purposes this will do.
     // -----------------------------------------------------------------------------------------------------------------------------------
-    for (unsigned int i = 0; i < grass.meshes.size(); i++){
-        unsigned int vao = grass.meshes[i].VAO;
+    for (unsigned int i = 0; i < models.at("grass/trava.obj").meshes.size(); i++){
+        unsigned int vao = models.at("grass/trava.obj").meshes[i].VAO;
         glBindVertexArray(vao);
         // set attribute pointers for matrix (4 times vec4)
         glEnableVertexAttribArray(3);
@@ -405,42 +584,41 @@ int main(){
         lightView = glm::lookAt(lightPos, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
         lightSpaceMatrix = lightProjection * lightView;
         // render scene from light's point of view
-        simpleDepthShader.use();
-        simpleDepthShader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
+        shaders.at("shadowMappingDepth").use();
+        shaders.at("shadowMappingDepth").setMat4("lightSpaceMatrix", lightSpaceMatrix);
 
         glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
         glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
         glClear(GL_DEPTH_BUFFER_BIT);
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texture_grass);
-//        render(simpleDepthShader);
+        glBindTexture(GL_TEXTURE_2D, textures.at("grass.png"));
+        render(shaders, models, textures, currentFrame);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
         // reset viewport
         glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-
         // Activate shader when setting uniforms/drawing objects
-        defaultShader.use();
-        defaultShader.setVec3("light.position", lightPos);
-        defaultShader.setVec3("viewPos", cameraPos);
+        shaders.at("default").use();
+        shaders.at("default").setVec3("light.position", lightPos);
+        shaders.at("default").setVec3("viewPos", cameraPos);
         // Light properties
-        defaultShader.setVec3("light.ambient", glm::vec3(lightAmbient));
-        defaultShader.setVec3("light.diffuse", glm::vec3(lightDiffuse));
-        defaultShader.setVec3("light.specular", glm::vec3(lightSpecular));
+        shaders.at("default").setVec3("light.ambient", glm::vec3(lightAmbient));
+        shaders.at("default").setVec3("light.diffuse", glm::vec3(lightDiffuse));
+        shaders.at("default").setVec3("light.specular", glm::vec3(lightSpecular));
         // Material properties
-        defaultShader.setVec3("material.specular", glm::vec3(materialSpecular));
-        defaultShader.setFloat("material.shininess", materialShine);
+        shaders.at("default").setVec3("material.specular", glm::vec3(materialSpecular));
+        shaders.at("default").setFloat("material.shininess", materialShine);
 
         // Activate shader when setting uniforms/drawing objects
-        unicornBodyShader.use();
-        unicornBodyShader.setVec3("lightPos", lightPos);
-        unicornBodyShader.setVec3("viewPos", cameraPos);
+        shaders.at("unicornBody").use();
+        shaders.at("unicornBody").setVec3("lightPos", lightPos);
+        shaders.at("unicornBody").setVec3("viewPos", cameraPos);
         // Light properties
-        unicornBodyShader.setVec3("light.ambient", glm::vec3(lightAmbient));
-        unicornBodyShader.setVec3("light.diffuse", glm::vec3(lightDiffuse));
-        unicornBodyShader.setVec3("light.specular", glm::vec3(lightSpecular));
+        shaders.at("unicornBody").setVec3("light.ambient", glm::vec3(lightAmbient));
+        shaders.at("unicornBody").setVec3("light.diffuse", glm::vec3(lightDiffuse));
+        shaders.at("unicornBody").setVec3("light.specular", glm::vec3(lightSpecular));
 
         // Start the Dear ImGui frame
         ImGui_ImplOpenGL3_NewFrame();
@@ -511,144 +689,7 @@ int main(){
             glBindFramebuffer(GL_FRAMEBUFFER, frameBufferObject);
             // ============================================================================================================================
 
-
-            // Render
-            glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            glActiveTexture(GL_TEXTURE0);
-
-            // Pass projection matrix to shader
-            glm::mat4 projection = glm::perspective(glm::radians(fieldOfView), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-            // Camera/view transformation
-            glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
-            // Model. Make sure to initialize matrix to identity matrix first
-            glm::mat4 model = glm::mat4(1.0f);
-
-            // view/projection transformations
-            grassShaderInstanced.use();
-            grassShaderInstanced.setMat4("projection", projection);
-            grassShaderInstanced.setMat4("view", view);
-
-            lightingShader.use();
-            lightingShader.setMat4("projection", projection);
-            lightingShader.setMat4("view", view);
-
-            unicornBodyShader.use();
-            unicornBodyShader.setMat4("projection", projection);
-            unicornBodyShader.setMat4("view", view);
-
-            defaultShader.use();
-            defaultShader.setMat4("projection", projection);
-            defaultShader.setMat4("view", view);
-
-
-            // Render the loaded models
-            glBindTexture(GL_TEXTURE_2D, texture_grass);
-            model = glm::mat4(1.0f);
-            model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
-            model = glm::scale(model, glm::vec3(planeMax, 10.0f, planeMax));
-            defaultShader.setMat4("model", model);
-            plane.Draw(defaultShader);
-
-            glBindTexture(GL_TEXTURE_2D, texture_mystery);
-            for (unsigned int n = 0; n < cubeCount; n++) {
-                model = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
-                float angle = 20.0f * currentFrame * ((float)n + 1);
-                model = glm::translate(model, cubePositions[n]);
-                model = glm::rotate(model, glm::radians(angle), cubePositions[n]);
-                model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
-                defaultShader.setMat4("model", model);
-                cube.Draw(defaultShader);
-            }
-
-            glBindTexture(GL_TEXTURE_2D, texture_skydome);
-            model = glm::mat4(1.0f);
-            model = glm::rotate(model, currentFrame * 0.01f, glm::vec3(0.0f, 1.0f, 0.0f));
-            model = glm::scale(model, glm::vec3(200.0f, 200.0f, 200.0f));
-            model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
-            defaultShader.setMat4("model", model);
-            sphere.Draw(defaultShader);
-
-
-            glBindTexture(GL_TEXTURE_2D, texture_fur);
-            defaultShader.use();
-            model = glm::mat4(1.0f);
-            if (wabbit.position.x >= planeMax || wabbit.position.z >= planeMax){
-                offset = -offset;
-            }
-            if (wabbit.position.x <= -planeMax || wabbit.position.z <= -planeMax){
-                offset = abs(offset);
-            }
-
-            // Wacky Wabbit Antics
-            float amplitude = 0.3f;
-            float speed = 7.0f;
-            float degrees = 0.0f;
-
-            float x = wabbit.position.x + (offset);
-            float y = amplitude * (glm::sin(speed * x)) + 0.2f;
-            float z = 10.0f * sin(0.25f * x);
-
-            model = glm::translate(model, glm::vec3(x, y, z));
-            if (offset > 0){
-                degrees = 90.0f;
-                if (wabbit.position.z > z){
-                    degrees += 45.0f;
-                }
-                else {
-                    degrees -= 45.0f;
-                }
-            }
-            else{
-                degrees = -90.0f;
-                if (wabbit.position.z > z){
-                    degrees -= 45.0f;
-                }
-                else {
-                    degrees += 45.0f;
-                }
-            }
-            wabbit.position = glm::vec3(x, y, z);
-
-            model = glm::rotate(model, glm::radians(degrees), glm::vec3(0.0f, 1.0f, 0.0f));
-            model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
-            model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
-            defaultShader.setMat4("model", model);
-            wabbit.Draw(defaultShader);
-
-
-            unicornBodyShader.use();
-            model = glm::mat4(1.0f);
-            model = glm::translate(model, unicorn.position);
-            model = glm::rotate(model, glm::radians(unicorn.rotationDegrees), unicorn.rotationAxis);
-            model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
-            model = glm::scale(model, unicorn.scale);
-            unicornBodyShader.setMat4("model", model);
-            unicornBodyShader.setVec3("lightPos", lightPos);
-            unicornBodyShader.setVec3("lightColor", glm::vec3(1.0f, 1.0f, 1.0f));
-            unicornBodyShader.setVec3("objectColor", unicornColorTest);
-            unicorn.Draw(defaultShader);
-
-
-//            grassShaderInstanced.use();
-//            grassShaderInstanced.setInt("texture_diffuse1", 0);
-//            glActiveTexture(GL_TEXTURE0);
-//            glBindTexture(GL_TEXTURE_2D, grass.textures_loaded[0].id); // note: we also made the textures_loaded vector public (instead of private) from the model class.
-//            for (unsigned int i = 0; i < grass.meshes.size(); i++)
-//            {
-//                glBindVertexArray(grass.meshes[i].VAO);
-//                glDrawElementsInstanced(GL_TRIANGLES, grass.meshes[i].indices.size(), GL_UNSIGNED_INT, 0, grassCount);
-//                glBindVertexArray(0);
-//            }
-
-
-//             Draw the lamp object
-            glActiveTexture(GL_TEXTURE0);
-            lightingShader.use();
-            model = glm::mat4(1.0f);
-            model = glm::translate(model, glm::vec3(lightPos.x, lightPos.y, lightPos.z));
-            lightingShader.setMat4("model", model);
-
+            render(shaders, models, textures, currentFrame);
 
             // ============================================================================================================================
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -706,10 +747,8 @@ int main(){
             ImGui::ShowDemoWindow(&show_demo_window);
         }
 
-        processInput(window);
-
-        // Handle jumps
-        playerJump(currentFrame);
+        processInput(window, models);
+        playerJump(currentFrame, models);
 
         // Rendering
         ImGui::Render();
@@ -733,7 +772,7 @@ int main(){
 }
 
 
-void processInput(GLFWwindow *window){
+void processInput(GLFWwindow *window, auto &models){
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, true);
     }
@@ -745,39 +784,39 @@ void processInput(GLFWwindow *window){
     if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
         auto offset = cameraSpeed * cameraFront;
         cameraPos += offset;
-        unicorn.position += offset;
-        unicorn.rotationDegrees = 180.0f;
+        models.at("unicorn/unicorn.obj").position += offset;
+        models.at("unicorn/unicorn.obj").rotationDegrees = 180.0f;
         fieldOfView = 45;
     }
     if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
         auto offset = cameraSpeed * cameraFront;
         cameraPos -= offset;
-        unicorn.position -= offset;
-        unicorn.rotationDegrees = 360.0f;
+        models.at("unicorn/unicorn.obj").position -= offset;
+        models.at("unicorn/unicorn.obj").rotationDegrees = 360.0f;
         fieldOfView = 60;
     }
     if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
         auto offset = glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
         cameraPos -= offset;
-        unicorn.position -= offset;
-        unicorn.rotationDegrees = -90.0f;
+        models.at("unicorn/unicorn.obj").position -= offset;
+        models.at("unicorn/unicorn.obj").rotationDegrees = -90.0f;
         if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS){
-            unicorn.rotationDegrees -= 45.0f;
+            models.at("unicorn/unicorn.obj").rotationDegrees -= 45.0f;
         }
         if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS){
-            unicorn.rotationDegrees += 45.0f;
+            models.at("unicorn/unicorn.obj").rotationDegrees += 45.0f;
         }
     }
     if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
         auto offset = glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
         cameraPos += offset;
-        unicorn.position += offset;
-        unicorn.rotationDegrees = 90.0f;
+        models.at("unicorn/unicorn.obj").position += offset;
+        models.at("unicorn/unicorn.obj").rotationDegrees = 90.0f;
         if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS){
-            unicorn.rotationDegrees += 45.0f;
+            models.at("unicorn/unicorn.obj").rotationDegrees += 45.0f;
         }
         if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS){
-            unicorn.rotationDegrees -= 45.0f;
+            models.at("unicorn/unicorn.obj").rotationDegrees -= 45.0f;
         }
     }
     if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
@@ -808,24 +847,24 @@ void processInput(GLFWwindow *window){
         cameraPos.z = -planeMax + 8.0f;
     }
 
-    if (unicorn.position.x > planeMax){
-        unicorn.position.x = planeMax;
+    if (models.at("unicorn/unicorn.obj").position.x > planeMax){
+        models.at("unicorn/unicorn.obj").position.x = planeMax;
     }
-    if (unicorn.position.x < -planeMax){
-        unicorn.position.x = -planeMax;
+    if (models.at("unicorn/unicorn.obj").position.x < -planeMax){
+        models.at("unicorn/unicorn.obj").position.x = -planeMax;
     }
-    if (unicorn.position.z > planeMax){
-        unicorn.position.z = planeMax;
+    if (models.at("unicorn/unicorn.obj").position.z > planeMax){
+        models.at("unicorn/unicorn.obj").position.z = planeMax;
     }
-    if (unicorn.position.z < -planeMax){
-        unicorn.position.z = -planeMax;
+    if (models.at("unicorn/unicorn.obj").position.z < -planeMax){
+        models.at("unicorn/unicorn.obj").position.z = -planeMax;
     }
 
     if (cameraPos.y > floorMin + 2.0f || cameraPos.y < floorMin + 2.0f){
         cameraPos.y = floorMin + 2.0f;
     }
-    if (unicorn.position.y > floorMin || unicorn.position.y < floorMin){
-        unicorn.position.y = floorMin;
+    if (models.at("unicorn/unicorn.obj").position.y > floorMin || models.at("unicorn/unicorn.obj").position.y < floorMin){
+        models.at("unicorn/unicorn.obj").position.y = floorMin;
     }
 
 }
