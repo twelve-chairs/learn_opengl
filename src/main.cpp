@@ -88,6 +88,7 @@ bool wireframe = false;
 glm::vec3 unicornColorTest;
 int testInt = 0;
 float testFloat = 0.0f;
+float bias = 0.0f;
 
 
 void createTexture(GLuint& texture, const std::string& path, bool alpha){
@@ -193,7 +194,7 @@ void renderWabbit(Shader &shader, auto &wabbitModel, auto &textures){
 
     // Wacky Wabbit Antics
     float amplitude = 0.3f;
-    float speed = 7.0f;
+    float speed = 3.0f;
     float degrees = 0.0f;
 
     float x = wabbitModel.position.x + (offset);
@@ -229,6 +230,55 @@ void renderWabbit(Shader &shader, auto &wabbitModel, auto &textures){
 //    glActiveTexture(GL_TEXTURE0);
 }
 
+void renderFrog(Shader &shader, auto &frogModel, auto &textures){
+    float offset = 0.005f;
+    shader.use();
+    glm::mat4 model = glm::mat4(1.0f);
+    if (frogModel.position.x >= planeMax || frogModel.position.z >= planeMax){
+        offset = -offset;
+    }
+    if (frogModel.position.x <= -planeMax || frogModel.position.z <= -planeMax){
+        offset = abs(offset);
+    }
+
+    // Wacky Wabbit Antics
+    float amplitude = 0.3f;
+    float speed = 3.0f;
+    float degrees = 0.0f;
+
+    float x = frogModel.position.x + (offset);
+    float y = amplitude * (glm::sin(speed * x)) + 0.2f;
+    float z = 10.0f * sin(0.25f * x);
+
+    model = glm::translate(model, glm::vec3(x, y, z));
+    if (offset > 0){
+        degrees = 90.0f;
+        if (frogModel.position.z > z){
+            degrees += 45.0f;
+        }
+        else {
+            degrees -= 45.0f;
+        }
+    }
+    else{
+        degrees = -90.0f;
+        if (frogModel.position.z > z){
+            degrees -= 45.0f;
+        }
+        else {
+            degrees += 45.0f;
+        }
+    }
+    frogModel.position = glm::vec3(x, y, z);
+
+    model = glm::rotate(model, glm::radians(degrees), glm::vec3(0.0f, 1.0f, 0.0f));
+    model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
+    model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
+    shader.setMat4("model", model);
+    frogModel.Draw(shader);
+//    glActiveTexture(GL_TEXTURE0);
+}
+
 void renderPlane(Shader &shader, auto &mesh, auto &texture, auto &depthMap, bool depthOnly = false){
     shader.use();
     glActiveTexture(GL_TEXTURE0);
@@ -236,13 +286,8 @@ void renderPlane(Shader &shader, auto &mesh, auto &texture, auto &depthMap, bool
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, depthMap);
     glm::mat4 model = glm::mat4(1.0f);
-    model = glm::translate(model, glm::vec3(0.0f, -1.5f, 0.0f));
-    if (depthOnly) {
-        model = glm::scale(model, glm::vec3(planeMax, 0.1f, planeMax));
-    }
-    else{
-        model = glm::scale(model, glm::vec3(planeMax, 0.1f, planeMax));
-    }
+    model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
+    model = glm::scale(model, glm::vec3(planeMax, 10.0f, planeMax));
     shader.setMat4("model", model);
     mesh.Draw(shader);
     glActiveTexture(GL_TEXTURE0);
@@ -293,6 +338,7 @@ void renderDepth(auto &shaders, auto &models, auto &textures, auto &currentFrame
     renderMysteryCubes(shaders.at("shadowMappingDepth"), models.at("primitives/cube.obj"), cubeCount, cubePositions, textures.at("mario_mystery.png"), currentFrame);
     renderSkyDome(shaders.at("shadowMappingDepth"), models.at("primitives/sphere.obj"), textures.at("skydome.jpeg"), currentFrame);
     renderWabbit(shaders.at("shadowMappingDepth"), models.at("wabbit/wabbit.obj"), textures);
+    renderFrog(shaders.at("default"), models.at("frog/frog.obj"), textures);
     renderUnicorn(shaders.at("shadowMappingDepth"), models.at("unicorn/unicorn.obj"), textures);
 //    renderLamp(shaders.at("shadowMappingDepth"), models.at("primitives/sphere.obj"));
 }
@@ -328,6 +374,7 @@ void render(auto &shaders, auto &models, auto &textures, auto &currentFrame, aut
     renderPlane(shaders.at("default"), models.at("primitives/plane.obj"), textures.at("grass.png"), depthMap);
     renderMysteryCubes(shaders.at("default"), models.at("primitives/cube.obj"), cubeCount, cubePositions, textures.at("mario_mystery.png"), currentFrame);
     renderSkyDome(shaders.at("default"), models.at("primitives/sphere.obj"), textures.at("skydome.jpeg"), currentFrame);
+    renderFrog(shaders.at("default"), models.at("frog/frog.obj"), textures);
     renderWabbit(shaders.at("default"), models.at("wabbit/wabbit.obj"), textures);
     renderUnicorn(shaders.at("unicornBody"), models.at("unicorn/unicorn.obj"), textures);
 }
@@ -409,7 +456,10 @@ int main(){
 
     std::vector<std::string> modelNames = {
             "unicorn/unicorn.obj",
+            "unicorn/unicornMane.obj",
+            "unicorn/unicornTail.obj",
             "wabbit/wabbit.obj",
+            "frog/frog.obj",
             "grass/trava.obj",
             "primitives/plane.obj",
             "primitives/cube.obj",
@@ -497,14 +547,6 @@ int main(){
     glReadBuffer(GL_NONE);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    // shader configuration
-    // --------------------
-    shaders.at("default").use();
-    shaders.at("default").setInt("diffuseTexture", 0);
-    shaders.at("default").setInt("shadowMap", 1);
-    shaders.at("unicornBody").use();
-    shaders.at("unicornBody").setInt("diffuseTexture", 0);
-    shaders.at("unicornBody").setInt("shadowMap", 1);
 
     static float lightAmbient = 1.0f;
     static float lightDiffuse = 0.0f;
@@ -563,30 +605,14 @@ int main(){
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // Activate shader when setting uniforms/drawing objects
-        shaders.at("default").use();
-        shaders.at("default").setVec3("lightPos", lightPos);
-        shaders.at("default").setVec3("viewPos", cameraPos);
-        shaders.at("default").setMat4("lightSpaceMatrix", lightSpaceMatrix);
-        // Light properties
-        shaders.at("default").setVec3("light.ambient", glm::vec3(lightAmbient));
-        shaders.at("default").setVec3("light.diffuse", glm::vec3(lightDiffuse));
-        shaders.at("default").setVec3("light.specular", glm::vec3(lightSpecular));
-        // Material properties
-        shaders.at("default").setVec3("material.specular", glm::vec3(materialSpecular));
-        shaders.at("default").setFloat("material.shininess", materialShine);
-
-        // Activate shader when setting uniforms/drawing objects
-        shaders.at("unicornBody").use();
-        shaders.at("unicornBody").setVec3("lightPos", lightPos);
-        shaders.at("unicornBody").setVec3("viewPos", cameraPos);
-        shaders.at("unicornBody").setMat4("lightSpaceMatrix", lightSpaceMatrix);
-        // Light properties
-        shaders.at("unicornBody").setVec3("light.ambient", glm::vec3(lightAmbient));
-        shaders.at("unicornBody").setVec3("light.diffuse", glm::vec3(lightDiffuse));
-        shaders.at("unicornBody").setVec3("light.specular", glm::vec3(lightSpecular));
-        // Material properties
-        shaders.at("default").setVec3("material.specular", glm::vec3(materialSpecular));
-        shaders.at("default").setFloat("material.shininess", materialShine);
+        for (const auto& shader: shaderNames){
+            shaders.at(shader).use();
+            shaders.at(shader).setVec3("lightPos", lightPos);
+            shaders.at(shader).setVec3("viewPos", cameraPos);
+            shaders.at(shader).setMat4("lightSpaceMatrix", lightSpaceMatrix);
+            shaders.at(shader).setInt("diffuseTexture", 0);
+            shaders.at(shader).setInt("shadowMap", 1);
+        }
 
         // Start the Dear ImGui frame
         ImGui_ImplOpenGL3_NewFrame();
@@ -702,20 +728,18 @@ int main(){
         ImGui::SliderFloat("light.y", &lightPos.y, -1, 300);
         ImGui::SliderFloat("light.z", &lightPos.z, -planeMax - 10, planeMax + 10);
         ImGui::SliderFloat("camera.x", &cameraPos.x, -planeMax - 10, planeMax + 10);
-//        ImGui::SliderFloat("camera.y", &cameraPos.y, -1, 300);
-//        ImGui::SliderFloat("camera.z", &cameraPos.z, -planeMax - 10, planeMax + 10);
-        ImGui::SliderFloat("nearPlane", &nearPlane, -100.0f, 100.0f);
-        ImGui::SliderFloat("farPlane", &farPlane, -100.0f, 100.0f);
+        ImGui::SliderFloat("camera.y", &cameraPos.y, -1, 300);
+        ImGui::SliderFloat("camera.z", &cameraPos.z, -planeMax - 10, planeMax + 10);
         ImGui::Checkbox("Wireframe", &wireframe);
         ImGui::End();
 
         ImGui::SetNextWindowPos( ImVec2(0, 390), ImGuiCond_Once);
         ImGui::SetNextWindowSize(ImVec2(220, 190), ImGuiCond_Always);
         ImGui::Begin("Unicorn Color", nullptr, flags);
-        ImGui::ColorPicker4("Color", (float*)&unicornColorTest, ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_DisplayRGB, NULL);
         const char* items[] = { "Body", "Mane", "Tail" };
         static int item_current = 0;
         ImGui::Combo("Part", &item_current, items, IM_ARRAYSIZE(items));
+        ImGui::ColorPicker4("Color", (float*)&unicornColorTest, ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_DisplayRGB, NULL);
         ImGui::End();
 
         // ImGui::ShowDemoWindow(&show_demo_window);
@@ -763,14 +787,14 @@ void processInput(GLFWwindow *window, auto &models){
             cameraPos += offset;
             models.at("unicorn/unicorn.obj").position += offset;
             models.at("unicorn/unicorn.obj").rotationDegrees = 180.0f;
-            fieldOfView = 90.0f;
+//            fieldOfView = 90.0f;
         }
         if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
             auto offset = cameraSpeed * cameraFront;
             cameraPos -= offset;
             models.at("unicorn/unicorn.obj").position -= offset;
             models.at("unicorn/unicorn.obj").rotationDegrees = 360.0f;
-            fieldOfView = 90.0f;
+//            fieldOfView = 90.0f;
         }
         if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
             auto offset = glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
@@ -819,8 +843,8 @@ void processInput(GLFWwindow *window, auto &models){
     if (cameraPos.x < -planeMax){
         cameraPos.x = -planeMax;
     }
-    if (cameraPos.z > planeMax + 4.0f){
-        cameraPos.z = planeMax + 4.0f;
+    if (cameraPos.z > planeMax + 2.0f){
+        cameraPos.z = planeMax + 2.0f;
     }
     if (cameraPos.z < -planeMax + 4.0f){
         cameraPos.z = -planeMax + 4.0f;
@@ -873,8 +897,8 @@ void mouseCallback(GLFWwindow* window, double xpos, double ypos){
     xoffset *= sensitivity;
     yoffset *= sensitivity;
 
-    yaw += xoffset;
-    pitch += yoffset;
+//    yaw += xoffset;
+//    pitch += yoffset;
 
     // make sure that when pitch is out of bounds, screen doesn't get flipped
     if (pitch > 89.0f)

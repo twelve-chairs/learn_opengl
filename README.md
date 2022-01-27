@@ -1,1 +1,1 @@
-![](https://github.com/twelvechairssoftware/learn_opengl/blob/master/Dec-26-2021%2021-16-38.gif)
+[![Everything Is AWESOME](https://img.youtube.com/vi/OxlsusXgxXM/0.jpg)](https://www.youtube.com/watch?v=OxlsusXgxXM "Everything Is AWESOME")
