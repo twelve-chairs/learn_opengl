@@ -85,10 +85,11 @@ float offset = 0.05f;
 
 bool wireframe = false;
 
-glm::vec3 unicornColorTest;
+glm::vec3 unicornColorTest = glm::vec3(0.163, 0.540, 0.571);
+glm::vec3 unicornManeColorTest = glm::vec3(0.765, 0.849, 0.086);
+glm::vec3 unicornTailColorTest = glm::vec3(0.765, 0.450, 0.450);
 int testInt = 0;
 float testFloat = 0.0f;
-float bias = 0.0f;
 
 
 void createTexture(GLuint& texture, const std::string& path, bool alpha){
@@ -133,6 +134,8 @@ void playerJump(float& currentFrame, auto &models){
         if (y >= playerView) {
             cameraPos.y = y + floorOffset;
             models.at("unicorn/unicorn.obj").position.y = y;
+            models.at("unicorn/unicornMane.obj").position.y = y;
+            models.at("unicorn/unicornTail.obj").position.y = y;
         }
         else {
             jump = false;
@@ -178,6 +181,36 @@ void renderUnicorn(Shader &shader, auto &unicornModel, auto &textures){
     shader.setVec3("lightPos", lightPos);
     shader.setVec3("lightColor", glm::vec3(1.0f, 1.0f, 1.0f));
     shader.setVec3("objectColor", unicornColorTest);
+    unicornModel.Draw(shader);
+//    glActiveTexture(GL_TEXTURE0);
+}
+
+void renderUnicornMane(Shader &shader, auto &unicornModel, auto &textures){
+    shader.use();
+    glm::mat4 model = glm::mat4(1.0f);
+    model = glm::translate(model, unicornModel.position);
+    model = glm::rotate(model, glm::radians(unicornModel.rotationDegrees), unicornModel.rotationAxis);
+    model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
+    model = glm::scale(model, unicornModel.scale);
+    shader.setMat4("model", model);
+    shader.setVec3("lightPos", lightPos);
+    shader.setVec3("lightColor", glm::vec3(1.0f, 1.0f, 1.0f));
+    shader.setVec3("objectColor", unicornManeColorTest);
+    unicornModel.Draw(shader);
+//    glActiveTexture(GL_TEXTURE0);
+}
+
+void renderUnicornTail(Shader &shader, auto &unicornModel, auto &textures){
+    shader.use();
+    glm::mat4 model = glm::mat4(1.0f);
+    model = glm::translate(model, unicornModel.position);
+    model = glm::rotate(model, glm::radians(unicornModel.rotationDegrees), unicornModel.rotationAxis);
+    model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
+    model = glm::scale(model, unicornModel.scale);
+    shader.setMat4("model", model);
+    shader.setVec3("lightPos", lightPos);
+    shader.setVec3("lightColor", glm::vec3(1.0f, 1.0f, 1.0f));
+    shader.setVec3("objectColor", unicornTailColorTest);
     unicornModel.Draw(shader);
 //    glActiveTexture(GL_TEXTURE0);
 }
@@ -231,7 +264,7 @@ void renderWabbit(Shader &shader, auto &wabbitModel, auto &textures){
 }
 
 void renderFrog(Shader &shader, auto &frogModel, auto &textures){
-    float offset = 0.005f;
+    float offset = 0.02f;
     shader.use();
     glm::mat4 model = glm::mat4(1.0f);
     if (frogModel.position.x >= planeMax || frogModel.position.z >= planeMax){
@@ -273,7 +306,7 @@ void renderFrog(Shader &shader, auto &frogModel, auto &textures){
 
     model = glm::rotate(model, glm::radians(degrees), glm::vec3(0.0f, 1.0f, 0.0f));
     model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
-    model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
+    model = glm::scale(model, glm::vec3(0.4f, 0.4f, 0.4f));
     shader.setMat4("model", model);
     frogModel.Draw(shader);
 //    glActiveTexture(GL_TEXTURE0);
@@ -338,8 +371,10 @@ void renderDepth(auto &shaders, auto &models, auto &textures, auto &currentFrame
     renderMysteryCubes(shaders.at("shadowMappingDepth"), models.at("primitives/cube.obj"), cubeCount, cubePositions, textures.at("mario_mystery.png"), currentFrame);
     renderSkyDome(shaders.at("shadowMappingDepth"), models.at("primitives/sphere.obj"), textures.at("skydome.jpeg"), currentFrame);
     renderWabbit(shaders.at("shadowMappingDepth"), models.at("wabbit/wabbit.obj"), textures);
-    renderFrog(shaders.at("default"), models.at("frog/frog.obj"), textures);
+    renderFrog(shaders.at("shadowMappingDepth"), models.at("frog/frog.obj"), textures);
     renderUnicorn(shaders.at("shadowMappingDepth"), models.at("unicorn/unicorn.obj"), textures);
+    renderUnicornMane(shaders.at("shadowMappingDepth"), models.at("unicorn/unicornMane.obj"), textures);
+    renderUnicornTail(shaders.at("shadowMappingDepth"), models.at("unicorn/unicornTail.obj"), textures);
 //    renderLamp(shaders.at("shadowMappingDepth"), models.at("primitives/sphere.obj"));
 }
 
@@ -366,17 +401,31 @@ void render(auto &shaders, auto &models, auto &textures, auto &currentFrame, aut
     shaders.at("unicornBody").setMat4("projection", projection);
     shaders.at("unicornBody").setMat4("view", view);
 
+    shaders.at("unicornMane").use();
+    shaders.at("unicornMane").setMat4("projection", projection);
+    shaders.at("unicornMane").setMat4("view", view);
+
+    shaders.at("unicornTail").use();
+    shaders.at("unicornTail").setMat4("projection", projection);
+    shaders.at("unicornTail").setMat4("view", view);
+
     shaders.at("default").use();
     shaders.at("default").setMat4("projection", projection);
     shaders.at("default").setMat4("view", view);
+
+    shaders.at("frog").use();
+    shaders.at("frog").setMat4("projection", projection);
+    shaders.at("frog").setMat4("view", view);
 
     // Render the loaded models
     renderPlane(shaders.at("default"), models.at("primitives/plane.obj"), textures.at("grass.png"), depthMap);
     renderMysteryCubes(shaders.at("default"), models.at("primitives/cube.obj"), cubeCount, cubePositions, textures.at("mario_mystery.png"), currentFrame);
     renderSkyDome(shaders.at("default"), models.at("primitives/sphere.obj"), textures.at("skydome.jpeg"), currentFrame);
-    renderFrog(shaders.at("default"), models.at("frog/frog.obj"), textures);
+    renderFrog(shaders.at("frog"), models.at("frog/frog.obj"), textures);
     renderWabbit(shaders.at("default"), models.at("wabbit/wabbit.obj"), textures);
     renderUnicorn(shaders.at("unicornBody"), models.at("unicorn/unicorn.obj"), textures);
+    renderUnicornMane(shaders.at("unicornMane"), models.at("unicorn/unicornMane.obj"), textures);
+    renderUnicornTail(shaders.at("unicornTail"), models.at("unicorn/unicornTail.obj"), textures);
 }
 
 int main(){
@@ -420,6 +469,7 @@ int main(){
     // Build and compile our shader programs
     std::vector<std::string> shaderNames = {
             "default",
+            "frog",
             "unicornBody",
             "unicornMane",
             "unicornTail",
@@ -502,7 +552,12 @@ int main(){
     stbi_set_flip_vertically_on_load(false);
     models.at("unicorn/unicorn.obj").scale = glm::vec3(0.35f, 0.35f, 0.35f);
     models.at("unicorn/unicorn.obj").rotationDegrees = 180.0f;
+    models.at("unicorn/unicornMane.obj").scale = glm::vec3(0.35f, 0.35f, 0.35f);
+    models.at("unicorn/unicornMane.obj").rotationDegrees = 180.0f;
+    models.at("unicorn/unicornTail.obj").scale = glm::vec3(0.35f, 0.35f, 0.35f);
+    models.at("unicorn/unicornTail.obj").rotationDegrees = 180.0f;
     models.at("wabbit/wabbit.obj").position = glm::vec3(-20.0f, 0.0f, 20.0f);
+    models.at("frog/frog.obj").position = glm::vec3(-20.0f, 0.0f, 20.0f);
 
 
     // Setup Dear ImGui context
@@ -578,7 +633,8 @@ int main(){
 
         // 1. render depth of scene to texture (from light's perspective)
         // --------------------------------------------------------------
-        glm::mat4 lightProjection, lightView;
+        glm::mat4 lightProjection;
+        glm::mat4 lightView;
         glm::mat4 lightSpaceMatrix;
         float nearPlane = -1.5;
         float farPlane = planeMax;
@@ -595,9 +651,9 @@ int main(){
         glClear(GL_DEPTH_BUFFER_BIT);
 //        glActiveTexture(GL_TEXTURE0);
 //        glBindTexture(GL_TEXTURE_2D, textures.at("rock.jpeg"));
-//        glCullFace(GL_FRONT);
+        glCullFace(GL_FRONT);
         renderDepth(shaders, models, textures, currentFrame, depthMap);
-//        glCullFace(GL_BACK);
+        glCullFace(GL_BACK);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
         // reset viewport
@@ -640,6 +696,18 @@ int main(){
                 ImGui::EndMenu();
             }
             if (ImGui::BeginMenu("Options")){
+                if (ImGui::MenuItem("Show / Hide Stats")){
+                    //Do something
+                }
+                if (ImGui::MenuItem("Show / Hide Colors")){
+                    //Do something
+                }
+                if (ImGui::MenuItem("Show / Hide Camera")){
+                    //Do something
+                }
+                if (ImGui::MenuItem("Show / Hide Depth Map")){
+                    //Do something
+                }
                 if (ImGui::MenuItem("Something")){
                     //Do something
                 }
@@ -650,20 +718,23 @@ int main(){
 
         // OpenGL window
         static bool use_work_area = false;
-        static ImGuiWindowFlags flags = ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings;
+        static ImGuiWindowFlags flags = ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoInputs;
         const ImGuiViewport* viewport = ImGui::GetMainViewport();
         ImGui::SetNextWindowPos(use_work_area ? viewport->WorkPos : viewport->Pos);
         ImGui::SetNextWindowSize(use_work_area ? viewport->WorkSize : viewport->Size);
 
+        ImGui::SetNextWindowPos(ImVec2(0, 18), ImGuiCond_Always);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
         ImGui::Begin("OpenGL", NULL, flags);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
         ImGui::BeginChild("Render");
+        ImGui::PopStyleVar();
         auto glWindowSize = ImGui::GetContentRegionAvail();
         auto glWindowPosition = ImGui::GetWindowPos();
         frameBufferSize.x = glWindowSize.x;
         frameBufferSize.y = glWindowSize.y;
 
         // Specify the viewport of OpenGL in the Window
-//        glViewport(0, 0, glWindowSize.x, glWindowSize.y);
+        glViewport(0, 0, glWindowSize.x, glWindowSize.y);
 
         try {
             glEnable(GL_FRAMEBUFFER_SRGB);
@@ -695,17 +766,18 @@ int main(){
         ImGui::End();
 
         // Depth Map window
-//        ImGui::SetNextWindowPos(ImVec2(700, 20), ImGuiCond_Once);
-//        flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings;
-//        ImGui::Begin("Depth Map", nullptr);
-//        ImGui::Image(reinterpret_cast<ImTextureID>(depthMap), frameBufferSize, ImVec2(0, 1), ImVec2(1, 0));
-//        ImGui::End();
+        ImGui::SetNextWindowPos(ImVec2(700, 20), ImGuiCond_Once);
+        flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings;
+        static bool showDepthMap = true;
+        ImGui::Begin("Depth Map", &showDepthMap);
+        ImGui::Image(reinterpret_cast<ImTextureID>(depthMap), frameBufferSize, ImVec2(0, 1), ImVec2(1, 0));
+        ImGui::End();
 
         // Stats window
         ImGui::SetNextWindowPos(ImVec2(0, 20), ImGuiCond_Once);
-        ImGui::SetNextWindowSize(ImVec2(220, 50), ImGuiCond_Always);
+        ImGui::SetNextWindowSize(ImVec2(220, 50), ImGuiCond_Once);
         flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings;
-        ImGui::Begin("Stats", nullptr, flags);
+        ImGui::Begin("Stats", &showDepthMap, flags);
         ImGui::Text(" %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
         // Stores the coordinates of the cursor
         double mouseX;
@@ -716,9 +788,10 @@ int main(){
         ImGui::End();
 
         // testLighting window
-        ImGui::SetNextWindowPos( ImVec2(0, 80), ImGuiCond_Once);
-        ImGui::SetNextWindowSize(ImVec2(220, 300), ImGuiCond_Always);
-        ImGui::Begin("testLighting", nullptr, flags);
+        ImGui::SetNextWindowPos( ImVec2(470, 20), ImGuiCond_Once);
+        flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings;
+//        ImGui::SetNextWindowSize(ImVec2(220, 320), ImGuiCond_Once);
+        ImGui::Begin("Camera / Lights", nullptr);
         ImGui::SliderFloat("lAmbient", &lightAmbient, 0.0, 1.0);
         ImGui::SliderFloat("lDiffuse", &lightDiffuse, 0.0, 1.0);
         ImGui::SliderFloat("lSpecular", &lightSpecular, 0.0, 1.0);
@@ -733,13 +806,13 @@ int main(){
         ImGui::Checkbox("Wireframe", &wireframe);
         ImGui::End();
 
-        ImGui::SetNextWindowPos( ImVec2(0, 390), ImGuiCond_Once);
-        ImGui::SetNextWindowSize(ImVec2(220, 190), ImGuiCond_Always);
-        ImGui::Begin("Unicorn Color", nullptr, flags);
-        const char* items[] = { "Body", "Mane", "Tail" };
-        static int item_current = 0;
-        ImGui::Combo("Part", &item_current, items, IM_ARRAYSIZE(items));
-        ImGui::ColorPicker4("Color", (float*)&unicornColorTest, ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_DisplayRGB, NULL);
+        ImGui::SetNextWindowPos( ImVec2(230, 20), ImGuiCond_Once);
+//        ImGui::SetNextWindowSize(ImVec2(220, 190), ImGuiCond_Always);
+        ImGui::Begin("Unicorn", nullptr);
+        ImGui::ColorPicker4("Body", (float*)&unicornColorTest, ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_DisplayRGB, NULL);
+        ImGui::ColorPicker4("Mane", (float*)&unicornManeColorTest, ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_DisplayRGB, NULL);
+        ImGui::ColorPicker4("Tail", (float*)&unicornTailColorTest, ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_DisplayRGB, NULL);
+
         ImGui::End();
 
         // ImGui::ShowDemoWindow(&show_demo_window);
@@ -786,38 +859,60 @@ void processInput(GLFWwindow *window, auto &models){
             auto offset = cameraSpeed * cameraFront;
             cameraPos += offset;
             models.at("unicorn/unicorn.obj").position += offset;
+            models.at("unicorn/unicornMane.obj").position += offset;
+            models.at("unicorn/unicornTail.obj").position += offset;
             models.at("unicorn/unicorn.obj").rotationDegrees = 180.0f;
-//            fieldOfView = 90.0f;
+            models.at("unicorn/unicornMane.obj").rotationDegrees = 180.0f;
+            models.at("unicorn/unicornTail.obj").rotationDegrees = 180.0f;
         }
         if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
             auto offset = cameraSpeed * cameraFront;
             cameraPos -= offset;
             models.at("unicorn/unicorn.obj").position -= offset;
+            models.at("unicorn/unicornMane.obj").position -= offset;
+            models.at("unicorn/unicornTail.obj").position -= offset;
             models.at("unicorn/unicorn.obj").rotationDegrees = 360.0f;
-//            fieldOfView = 90.0f;
+            models.at("unicorn/unicornMane.obj").rotationDegrees = 360.0f;
+            models.at("unicorn/unicornTail.obj").rotationDegrees = 360.0f;
         }
         if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
             auto offset = glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
             cameraPos -= offset;
             models.at("unicorn/unicorn.obj").position -= offset;
+            models.at("unicorn/unicornMane.obj").position -= offset;
+            models.at("unicorn/unicornTail.obj").position -= offset;
             models.at("unicorn/unicorn.obj").rotationDegrees = -90.0f;
+            models.at("unicorn/unicornMane.obj").rotationDegrees = -90.0f;
+            models.at("unicorn/unicornTail.obj").rotationDegrees = -90.0f;
             if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
                 models.at("unicorn/unicorn.obj").rotationDegrees -= 45.0f;
+                models.at("unicorn/unicornMane.obj").rotationDegrees -= 45.0f;
+                models.at("unicorn/unicornTail.obj").rotationDegrees -= 45.0f;
             }
             if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
                 models.at("unicorn/unicorn.obj").rotationDegrees += 45.0f;
+                models.at("unicorn/unicornMane.obj").rotationDegrees += 45.0f;
+                models.at("unicorn/unicornTail.obj").rotationDegrees += 45.0f;
             }
         }
         if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
             auto offset = glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
             cameraPos += offset;
             models.at("unicorn/unicorn.obj").position += offset;
+            models.at("unicorn/unicornMane.obj").position += offset;
+            models.at("unicorn/unicornTail.obj").position += offset;
             models.at("unicorn/unicorn.obj").rotationDegrees = 90.0f;
+            models.at("unicorn/unicornMane.obj").rotationDegrees = 90.0f;
+            models.at("unicorn/unicornTail.obj").rotationDegrees = 90.0f;
             if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
                 models.at("unicorn/unicorn.obj").rotationDegrees += 45.0f;
+                models.at("unicorn/unicornMane.obj").rotationDegrees += 45.0f;
+                models.at("unicorn/unicornTail.obj").rotationDegrees += 45.0f;
             }
             if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
                 models.at("unicorn/unicorn.obj").rotationDegrees -= 45.0f;
+                models.at("unicorn/unicornMane.obj").rotationDegrees -= 45.0f;
+                models.at("unicorn/unicornTail.obj").rotationDegrees -= 45.0f;
             }
         }
     }
@@ -828,14 +923,6 @@ void processInput(GLFWwindow *window, auto &models){
             jump = true;
         }
     }
-//    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
-//        testAngle += 0.1f;
-//        spdlog::info("testAngle: {}", testAngle);
-//    }
-//    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
-//        testAngle -= 0.1f;
-//        spdlog::info("testAngle: {}", testAngle);
-//    }
 
     if (cameraPos.x > planeMax){
         cameraPos.x = planeMax;
@@ -852,15 +939,23 @@ void processInput(GLFWwindow *window, auto &models){
 
     if (models.at("unicorn/unicorn.obj").position.x > planeMax){
         models.at("unicorn/unicorn.obj").position.x = planeMax;
+        models.at("unicorn/unicornMane.obj").position.x = planeMax;
+        models.at("unicorn/unicornTail.obj").position.x = planeMax;
     }
     if (models.at("unicorn/unicorn.obj").position.x < -planeMax){
         models.at("unicorn/unicorn.obj").position.x = -planeMax;
+        models.at("unicorn/unicornMane.obj").position.x = -planeMax;
+        models.at("unicorn/unicornTail.obj").position.x = -planeMax;
     }
     if (models.at("unicorn/unicorn.obj").position.z > planeMax){
         models.at("unicorn/unicorn.obj").position.z = planeMax;
+        models.at("unicorn/unicornMane.obj").position.z = planeMax;
+        models.at("unicorn/unicornTail.obj").position.z = planeMax;
     }
     if (models.at("unicorn/unicorn.obj").position.z < -planeMax){
         models.at("unicorn/unicorn.obj").position.z = -planeMax;
+        models.at("unicorn/unicornMane.obj").position.z = -planeMax;
+        models.at("unicorn/unicornTail.obj").position.z = -planeMax;
     }
 
     if (cameraPos.y > floorMin + 2.0f || cameraPos.y < floorMin + 2.0f){
@@ -868,6 +963,8 @@ void processInput(GLFWwindow *window, auto &models){
     }
     if (models.at("unicorn/unicorn.obj").position.y > floorMin || models.at("unicorn/unicorn.obj").position.y < floorMin){
         models.at("unicorn/unicorn.obj").position.y = floorMin;
+        models.at("unicorn/unicornMane.obj").position.y = floorMin;
+        models.at("unicorn/unicornTail.obj").position.y = floorMin;
     }
 
     lightPos = models.at("unicorn/unicorn.obj").position;
@@ -897,8 +994,8 @@ void mouseCallback(GLFWwindow* window, double xpos, double ypos){
     xoffset *= sensitivity;
     yoffset *= sensitivity;
 
-//    yaw += xoffset;
-//    pitch += yoffset;
+    yaw += xoffset;
+    pitch += yoffset;
 
     // make sure that when pitch is out of bounds, screen doesn't get flipped
     if (pitch > 89.0f)
