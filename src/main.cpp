@@ -170,16 +170,16 @@ GLuint initFrameBuffer(){
     return frameBufferObject;
 }
 
-void renderGrass(Shader &shader, auto &grassModel, const std::vector<glm::mat4> &positions){
+void renderGrass(Shader &shader, auto &grassModel, auto grassCount){
+    glActiveTexture(GL_TEXTURE0);
     shader.use();
-//    glActiveTexture(GL_TEXTURE0);
-//    glBindTexture(GL_TEXTURE_2D, grassModel.textures_loaded[0].id); // note: we also made the textures_loaded vector public (instead of private) from the model class.
-    for (unsigned int i = 0; i < grassModel.meshes.size(); i++)
-    {
+    shader.setVec3("objectColor", unicornColorTest);
+    for (unsigned int i = 0; i < grassModel.meshes.size(); i++){
         glBindVertexArray(grassModel.meshes[i].VAO);
-        glDrawElementsInstanced(GL_TRIANGLES, static_cast<unsigned int>(grassModel.meshes[i].indices.size()), GL_UNSIGNED_INT, nullptr, positions.size());
+        glDrawElementsInstanced(GL_TRIANGLES, static_cast<unsigned int>(grassModel.meshes[i].indices.size()), GL_UNSIGNED_INT, nullptr, grassCount);
         glBindVertexArray(0);
     }
+    glActiveTexture(GL_TEXTURE0);
 }
 
 void renderUnicorn(Shader &shader, auto &unicornModel, auto &textures){
@@ -366,7 +366,7 @@ void renderSkyDome(Shader &shader, auto &mesh, auto &texture, auto &currentFrame
     glActiveTexture(GL_TEXTURE0);
 }
 
-void renderDepth(auto &shaders, auto &models, auto &textures, auto &currentFrame, auto &depthMap, std::vector<glm::mat4> grassPositions){
+void renderDepth(auto &shaders, auto &models, auto &textures, auto &currentFrame, auto &depthMap){
     // Pass projection matrix to shader
     glm::mat4 projection = glm::perspective(glm::radians(fieldOfView), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
     // Camera/view transformation
@@ -390,7 +390,7 @@ void renderDepth(auto &shaders, auto &models, auto &textures, auto &currentFrame
     renderUnicornTail(shaders.at("shadowMappingDepth"), models.at("unicorn/unicornTail.obj"), textures);
 }
 
-void render(auto &shaders, auto &models, auto &textures, auto &currentFrame, auto &depthMap, auto &grassPositions){
+void render(auto &shaders, auto &models, auto &textures, auto &currentFrame, auto &depthMap, auto &grassCount){
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 //    glActiveTexture(GL_TEXTURE0);
 //    glBindTexture(GL_TEXTURE_2D, textures.at("rock.jpeg"));
@@ -413,7 +413,7 @@ void render(auto &shaders, auto &models, auto &textures, auto &currentFrame, aut
 
     // Render the loaded models
     renderPlane(shaders.at("default"), models.at("primitives/plane.obj"), textures.at("grass.png"), depthMap);
-    renderGrass(shaders.at("grass"), models.at("grass/grass.obj"), grassPositions);
+    renderGrass(shaders.at("grass"), models.at("grass/grass.obj"), grassCount);
     renderMysteryCubes(shaders.at("default"), models.at("primitives/cube.obj"), cubeCount, cubePositions, textures.at("mario_mystery.png"), currentFrame);
     renderSkyDome(shaders.at("default"), models.at("primitives/sphere.obj"), textures.at("skydome.jpeg"), currentFrame);
     renderFrog(shaders.at("frog"), models.at("frog/frog.obj"), textures, currentFrame);
@@ -528,16 +528,16 @@ int main(){
 
     // Generate grass objects for GPU instancing
     unsigned int grassCount = 250;
-    std::vector<glm::mat4> grassPositions;
+    glm::mat4 *grassPositions;
+    grassPositions = new glm::mat4[grassCount];
     for (unsigned int i = 0; i < grassCount; i++){
         glm::mat4 model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(
-                glm::linearRand(-planeMax, planeMax),
-                0.0f,
-                glm::linearRand(-planeMax, planeMax)
-        ));
+        model = glm::translate(model, glm::vec3(glm::linearRand(-planeMax, planeMax),
+                                                0.0f,
+                                                glm::linearRand(-planeMax, planeMax))
+        );
         model = glm::rotate(model, glm::radians(glm::linearRand(1.0f, 270.0f)), glm::vec3(0.0f, 1.0f, 0.0f));
-        grassPositions.emplace_back(model);
+        grassPositions[i] = model;
     }
 
     // Init models
@@ -614,8 +614,6 @@ int main(){
     glBufferData(GL_ARRAY_BUFFER, grassCount * sizeof(glm::mat4), &grassPositions[0], GL_STATIC_DRAW);
 
     // set transformation matrices as an instance vertex attribute (with divisor 1)
-    // note: we're cheating a little by taking the, now publicly declared, VAO of the model's mesh(es) and adding new vertexAttribPointers
-    // normally you'd want to do this in a more organized fashion, but for learning purposes this will do.
     // -----------------------------------------------------------------------------------------------------------------------------------
     for (unsigned int i = 0; i < models.at("grass/grass.obj").meshes.size(); i++)
     {
@@ -672,7 +670,7 @@ int main(){
         glClear(GL_DEPTH_BUFFER_BIT);
         glActiveTexture(GL_TEXTURE0);
         glCullFace(GL_FRONT);
-        renderDepth(shaders, models, textures, currentFrame, depthMap, grassPositions);
+        renderDepth(shaders, models, textures, currentFrame, depthMap);
         glCullFace(GL_BACK);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -771,7 +769,7 @@ int main(){
             glBindFramebuffer(GL_FRAMEBUFFER, frameBufferObject);
             // ============================================================================================================================
 
-            render(shaders, models, textures, currentFrame, depthMap, grassPositions);
+            render(shaders, models, textures, currentFrame, depthMap, grassCount);
 
             // ============================================================================================================================
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
