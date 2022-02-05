@@ -170,10 +170,12 @@ GLuint initFrameBuffer(){
     return frameBufferObject;
 }
 
-void renderGrass(Shader &shader, auto &grassModel, auto grassCount){
+void renderGrass(Shader &shader, auto &grassModel, auto &textures, auto grassCount){
     glActiveTexture(GL_TEXTURE0);
+//    glBindTexture(GL_TEXTURE_2D, textures.at("grass.png"));
     shader.use();
-    shader.setVec3("objectColor", unicornColorTest);
+    shader.setVec3("lightPos", lightPos);
+    shader.setVec3("lightColor", glm::vec3(1.0f, 1.0f, 1.0f));
     for (unsigned int i = 0; i < grassModel.meshes.size(); i++){
         glBindVertexArray(grassModel.meshes[i].VAO);
         glDrawElementsInstanced(GL_TRIANGLES, static_cast<unsigned int>(grassModel.meshes[i].indices.size()), GL_UNSIGNED_INT, nullptr, grassCount);
@@ -228,22 +230,28 @@ void renderUnicornTail(Shader &shader, auto &unicornModel, auto &textures){
 }
 
 void renderWabbit(Shader &shader, auto &wabbitModel, auto &textures, auto &currentFrame){
-    float offset = 0.05f;
     shader.use();
     glm::mat4 model = glm::mat4(1.0f);
-    if (wabbitModel.position.x >= planeMax || wabbitModel.position.z >= planeMax){
-        offset = -offset;
-    }
-    if (wabbitModel.position.x <= -planeMax || wabbitModel.position.z <= -planeMax){
-        offset = abs(offset);
-    }
 
     // Wacky Wabbit Antics
     float amplitude = 0.3f;
     float speed = 3.0f;
-    float degrees = 0.0f;
+    float degrees = wabbitModel.rotationDegrees;
+    float offset = wabbitModel.movementOffset;
 
-    float x = wabbitModel.position.x + (offset);
+    float x = wabbitModel.position.x;
+    if (x >= planeMax){
+        offset = -abs(offset);
+        x = planeMax + offset;
+    }
+    else if (x <= -planeMax){
+        offset = abs(offset);
+        x = -planeMax + offset;
+    }
+    else {
+        x = x + offset;
+    }
+
     float y = amplitude * (glm::sin(speed * x)) + 0.2f;
     float z = 10.0f * sin(0.25f * x);
 
@@ -267,37 +275,46 @@ void renderWabbit(Shader &shader, auto &wabbitModel, auto &textures, auto &curre
         }
     }
     wabbitModel.position = glm::vec3(x, y, z);
+    wabbitModel.rotationDegrees = degrees;
+    wabbitModel.movementOffset = offset;
 
     model = glm::rotate(model, glm::radians(degrees), glm::vec3(0.0f, 1.0f, 0.0f));
     model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
     model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
     shader.setMat4("model", model);
     wabbitModel.Draw(shader);
-//    glActiveTexture(GL_TEXTURE0);
+    glActiveTexture(GL_TEXTURE0);
 }
 
 void renderFrog(Shader &shader, auto &frogModel, auto &textures, auto &currentFrame){
-    float offset = 0.01f;
     shader.use();
     glm::mat4 model = glm::mat4(1.0f);
-    if (frogModel.position.x >= planeMax || frogModel.position.z >= planeMax){
-        offset = -offset;
-    }
-    if (frogModel.position.x <= -planeMax || frogModel.position.z <= -planeMax){
-        offset = abs(offset);
-    }
 
-    // Freaky Frog Antics
+    // Funky Frog Antics
     float amplitude = 0.3f;
     float speed = 9.0f;
-    float degrees = 0.0f;
+    float offset = frogModel.movementOffset;
+    float degrees = frogModel.rotationDegrees;
+    float x = frogModel.position.x;
 
-    float x = frogModel.position.x + (offset);
+    if (x >= planeMax){
+        offset = -abs(offset);
+        x = planeMax + offset;
+    }
+    else if (x <= -planeMax){
+        offset = abs(offset);
+        x = -planeMax + offset;
+    }
+    else {
+        x = x + offset;
+    }
+
     float y = amplitude * (glm::sin(speed * x)) + 0.2f;
     float z = 10.0f * sin(0.25f * x);
 
     model = glm::translate(model, glm::vec3(x, y, z));
-    if (offset > 0){
+
+    if (offset > 0.0f){
         degrees = 90.0f;
         if (frogModel.position.z >= z){
             degrees += 45.0f;
@@ -316,10 +333,13 @@ void renderFrog(Shader &shader, auto &frogModel, auto &textures, auto &currentFr
         }
     }
     frogModel.position = glm::vec3(x, y, z);
+    frogModel.rotationDegrees = degrees;
+    frogModel.movementOffset = offset;
+
 
     model = glm::rotate(model, glm::radians(degrees), glm::vec3(0.0f, 1.0f, 0.0f));
     model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
-    model = glm::scale(model, glm::vec3(0.4f, 0.4f, 0.4f));
+    model = glm::scale(model, glm::vec3(0.3f, 0.3f, 0.3f));
     shader.setMat4("model", model);
     frogModel.Draw(shader);
     glActiveTexture(GL_TEXTURE0);
@@ -366,7 +386,7 @@ void renderSkyDome(Shader &shader, auto &mesh, auto &texture, auto &currentFrame
     glActiveTexture(GL_TEXTURE0);
 }
 
-void renderDepth(auto &shaders, auto &models, auto &textures, auto &currentFrame, auto &depthMap){
+void renderDepth(auto &shaders, auto &models, auto &textures, auto &currentFrame, auto &depthMap, auto &grassCount){
     // Pass projection matrix to shader
     glm::mat4 projection = glm::perspective(glm::radians(fieldOfView), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
     // Camera/view transformation
@@ -388,6 +408,7 @@ void renderDepth(auto &shaders, auto &models, auto &textures, auto &currentFrame
     renderUnicorn(shaders.at("shadowMappingDepth"), models.at("unicorn/unicorn.obj"), textures);
     renderUnicornMane(shaders.at("shadowMappingDepth"), models.at("unicorn/unicornMane.obj"), textures);
     renderUnicornTail(shaders.at("shadowMappingDepth"), models.at("unicorn/unicornTail.obj"), textures);
+    renderGrass(shaders.at("shadowMappingDepth"), models.at("grass/grass.obj"), textures, grassCount);
 }
 
 void render(auto &shaders, auto &models, auto &textures, auto &currentFrame, auto &depthMap, auto &grassCount){
@@ -413,7 +434,6 @@ void render(auto &shaders, auto &models, auto &textures, auto &currentFrame, aut
 
     // Render the loaded models
     renderPlane(shaders.at("default"), models.at("primitives/plane.obj"), textures.at("grass.png"), depthMap);
-    renderGrass(shaders.at("grass"), models.at("grass/grass.obj"), grassCount);
     renderMysteryCubes(shaders.at("default"), models.at("primitives/cube.obj"), cubeCount, cubePositions, textures.at("mario_mystery.png"), currentFrame);
     renderSkyDome(shaders.at("default"), models.at("primitives/sphere.obj"), textures.at("skydome.jpeg"), currentFrame);
     renderFrog(shaders.at("frog"), models.at("frog/frog.obj"), textures, currentFrame);
@@ -421,6 +441,7 @@ void render(auto &shaders, auto &models, auto &textures, auto &currentFrame, aut
     renderUnicorn(shaders.at("unicornBody"), models.at("unicorn/unicorn.obj"), textures);
     renderUnicornMane(shaders.at("unicornMane"), models.at("unicorn/unicornMane.obj"), textures);
     renderUnicornTail(shaders.at("unicornTail"), models.at("unicorn/unicornTail.obj"), textures);
+//    renderGrass(shaders.at("default"), models.at("grass/grass.obj"), textures, grassCount);
 }
 
 int main(){
@@ -517,7 +538,7 @@ int main(){
     }
 
 
-    // Static world space positions of our cubes and pyramids
+    // Static world space positions of our cubes
     for (unsigned int n = 0; n < cubeCount; n++){
         cubePositions.emplace_back(
                 glm::linearRand(-planeMax, planeMax),
@@ -532,11 +553,11 @@ int main(){
     grassPositions = new glm::mat4[grassCount];
     for (unsigned int i = 0; i < grassCount; i++){
         glm::mat4 model = glm::mat4(1.0f);
+        model = glm::rotate(model, glm::radians(glm::linearRand(1.0f, 270.0f)), glm::vec3(0.0f, 1.0f, 0.0f));
         model = glm::translate(model, glm::vec3(glm::linearRand(-planeMax, planeMax),
                                                 0.0f,
                                                 glm::linearRand(-planeMax, planeMax))
         );
-        model = glm::rotate(model, glm::radians(glm::linearRand(1.0f, 270.0f)), glm::vec3(0.0f, 1.0f, 0.0f));
         grassPositions[i] = model;
     }
 
@@ -549,9 +570,11 @@ int main(){
     models.at("unicorn/unicornTail.obj").scale = glm::vec3(0.35f, 0.35f, 0.35f);
     models.at("unicorn/unicornTail.obj").rotationDegrees = 180.0f;
 
-    models.at("grass/grass.obj").position = glm::vec3(0.0f, 0.0f, 0.0f);
-    models.at("wabbit/wabbit.obj").position = glm::vec3(0.0f, 0.0f, 0.0f);
-    models.at("frog/frog.obj").position = glm::vec3(0.0f, 0.0f, 0.0f);
+    models.at("wabbit/wabbit.obj").position = glm::vec3(-planeMax, 0.0f, 0.0f);
+    models.at("wabbit/wabbit.obj").movementOffset = 0.04f;
+
+    models.at("frog/frog.obj").position = glm::vec3(planeMax, 0.0f, 0.0f);
+    models.at("frog/frog.obj").movementOffset = 0.03f;
 
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
@@ -670,7 +693,7 @@ int main(){
         glClear(GL_DEPTH_BUFFER_BIT);
         glActiveTexture(GL_TEXTURE0);
         glCullFace(GL_FRONT);
-        renderDepth(shaders, models, textures, currentFrame, depthMap);
+        renderDepth(shaders, models, textures, currentFrame, depthMap, grassCount);
         glCullFace(GL_BACK);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 

@@ -36,6 +36,7 @@ public:
     glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f);
     glm::vec3 rotationAxis = glm::vec3(0.0f, 1.0f, 0.0f);
     float rotationDegrees = 0.0f;
+    float movementOffset = 0.0f;
 
     float moving = false;
     glm::vec3 destination = glm::vec3(0.0f, 0.0f, 0.0f);
