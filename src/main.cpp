@@ -22,13 +22,14 @@
 #include <stb_image.h>
 #include <spdlog/spdlog.h>
 #include <filesystem>
-#include <chrono>
-#include <thread>
+#include <string>
+#include <cstdlib>
 #include "include/helpers/Shader.h"
 #include "include/helpers/Model.h"
-#include <iostream>
-#include <string>
-#include <regex>
+#include <vector>
+#include <map>
+#include <random>
+
 
 void framebufferSizeCallback(GLFWwindow* window, int width, int height = false);
 void processInput(GLFWwindow *window, auto &models);
@@ -53,10 +54,13 @@ unsigned int textureColorBuffer;
 ImVec2 glWindowSize = ImVec2(SCR_WIDTH, SCR_HEIGHT);
 ImVec2 frameBufferSize = glWindowSize;
 
+const float planeMax = 20.0f;
+const float floorMin = 0.0f;
+
 // Camera
-glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
+glm::vec3 cameraPos = glm::vec3(0.0f, 10.0f, planeMax);
 glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
-glm::vec3 cameraUp = glm::vec3(0.0f, 2.0f,  0.0f);
+glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f,  0.0f);
 
 float lastX = SCR_WIDTH / 2.0f  ;
 float lastY = SCR_HEIGHT / 2.0f;
@@ -64,7 +68,7 @@ bool firstMouse = true;
 
 float yaw = -90.0f;	// yaw is initialized to -90.0 degrees since a yaw of 0.0 results in a direction vector pointing to the right, so we initially rotate a bit to the left.
 float pitch = 0.0f;
-float fieldOfView = 90.0f;
+float fieldOfView = 70.0f;
 
 // Lighting
 glm::vec3 lightPos(0.0f, 5.0f, 0.0f);
@@ -75,22 +79,31 @@ float lastFrame = 0.0f;
 bool jump = false;
 float jumpStart = 0.0f;
 
-const float planeMax = 20.0f;
-const float floorMin = 0.0f;
-
 int cubeCount = 10;
 std::vector<glm::vec3> cubePositions;
-
-//float offset = 0.05f;
 
 bool wireframe = false;
 
 glm::vec3 unicornColorTest = glm::vec3(0.163, 0.540, 0.571);
 glm::vec3 unicornManeColorTest = glm::vec3(0.765, 0.849, 0.086);
 glm::vec3 unicornTailColorTest = glm::vec3(0.765, 0.450, 0.450);
+
 int testInt = 0;
 float testFloat = 0.0f;
 
+int randomInteger(int to, int from){
+    std::random_device randomizerSeed;
+    std::default_random_engine randomEngine(randomizerSeed());
+    std::uniform_int_distribution<int> randomRange(from, to);
+    return randomRange(randomEngine);
+}
+
+float randomFloat(float to, float from){
+    std::random_device randomizerSeed;
+    std::default_random_engine randomEngine(randomizerSeed());
+    std::uniform_real_distribution<float> distribution(from, to);
+    return distribution(randomEngine);
+}
 
 void createTexture(GLuint& texture, const std::string& path, bool alpha){
     glGenTextures(1, &texture);
@@ -132,7 +145,7 @@ void playerJump(float& currentFrame, auto &models){
     if (jump){
         float y = amplitude * (glm::sin(speed * x)) + 1.0;
         if (y >= playerView) {
-            cameraPos.y = y + floorOffset;
+//            cameraPos.y = y + floorOffset;
             models.at("unicorn/unicorn.obj").position.y = y;
             models.at("unicorn/unicornMane.obj").position.y = y;
             models.at("unicorn/unicornTail.obj").position.y = y;
@@ -172,7 +185,7 @@ GLuint initFrameBuffer(){
 
 void renderGrass(Shader &shader, auto &grassModel, auto &textures, auto grassCount){
     glActiveTexture(GL_TEXTURE0);
-//    glBindTexture(GL_TEXTURE_2D, textures.at("grass.png"));
+    glBindTexture(GL_TEXTURE_2D, textures.at("grass.png"));
     shader.use();
     shader.setVec3("lightPos", lightPos);
     shader.setVec3("lightColor", glm::vec3(1.0f, 1.0f, 1.0f));
@@ -541,9 +554,9 @@ int main(){
     // Static world space positions of our cubes
     for (unsigned int n = 0; n < cubeCount; n++){
         cubePositions.emplace_back(
-                glm::linearRand(-planeMax, planeMax),
-                glm::linearRand(2.5f, 6.0f),
-                glm::linearRand(-planeMax, planeMax)
+                randomFloat(-planeMax, planeMax),
+                randomFloat(2.5f, 6.0f),
+                randomFloat(-planeMax, planeMax)
         );
     }
 
@@ -553,10 +566,10 @@ int main(){
     grassPositions = new glm::mat4[grassCount];
     for (unsigned int i = 0; i < grassCount; i++){
         glm::mat4 model = glm::mat4(1.0f);
-        model = glm::rotate(model, glm::radians(glm::linearRand(1.0f, 270.0f)), glm::vec3(0.0f, 1.0f, 0.0f));
-        model = glm::translate(model, glm::vec3(glm::linearRand(-planeMax, planeMax),
+        model = glm::rotate(model, glm::radians(randomFloat(1.0f, 270.0f)), glm::vec3(0.0f, 1.0f, 0.0f));
+        model = glm::translate(model, glm::vec3(randomFloat(-planeMax, planeMax),
                                                 0.0f,
-                                                glm::linearRand(-planeMax, planeMax))
+                                                randomFloat(-planeMax, planeMax))
         );
         grassPositions[i] = model;
     }
@@ -702,7 +715,7 @@ int main(){
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // Activate shader when setting uniforms/drawing objects
-        for (const auto& shader: shaderNames){
+        for (const auto &shader: shaderNames){
             shaders.at(shader).use();
             shaders.at(shader).setVec3("lightPos", lightPos);
             shaders.at(shader).setVec3("viewPos", cameraPos);
@@ -764,7 +777,7 @@ int main(){
         ImGui::SetNextWindowPos(use_work_area ? viewport->WorkPos : viewport->Pos);
         ImGui::SetNextWindowSize(use_work_area ? viewport->WorkSize : viewport->Size);
 
-        ImGui::SetNextWindowPos(ImVec2(0, 18), ImGuiCond_Always);
+        ImGui::SetNextWindowPos(ImVec2(0, 40), ImGuiCond_Always);
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
         ImGui::Begin("OpenGL", NULL, flags);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
         ImGui::BeginChild("Render");
@@ -835,15 +848,19 @@ int main(){
         ImGui::Begin("Camera / Lights", nullptr);
         ImGui::SliderFloat("lAmbient", &lightAmbient, 0.0, 1.0);
         ImGui::SliderFloat("lDiffuse", &lightDiffuse, 0.0, 1.0);
-        ImGui::SliderFloat("lSpecular", &lightSpecular, 0.0, 1.0);
-        ImGui::SliderFloat("mSpecular", &materialSpecular, 0.0, 1.0);
-        ImGui::SliderFloat("mShine", &materialShine, 0.0, 100.0);
+
         ImGui::SliderFloat("light.x", &lightPos.x, -planeMax - 10, planeMax + 10);
         ImGui::SliderFloat("light.y", &lightPos.y, -1, 300);
         ImGui::SliderFloat("light.z", &lightPos.z, -planeMax - 10, planeMax + 10);
-        ImGui::SliderFloat("camera.x", &cameraPos.x, -planeMax - 10, planeMax + 10);
-        ImGui::SliderFloat("camera.y", &cameraPos.y, -1, 300);
-        ImGui::SliderFloat("camera.z", &cameraPos.z, -planeMax - 10, planeMax + 10);
+
+//        ImGui::SliderFloat("cameraFront.x", &cameraFront.x, -20.0, 20.0);
+//        ImGui::SliderFloat("cameraFront.y", &cameraFront.y, -20.0, 20.0);
+//        ImGui::SliderFloat("cameraFront.z", &cameraFront.z, -20.0, 20.0);
+
+        ImGui::SliderFloat("cameraPos.x", &cameraPos.x, -planeMax, planeMax);
+        ImGui::SliderFloat("cameraPos.y", &cameraPos.y, -1, 300);
+        ImGui::SliderFloat("cameraPos.z", &cameraPos.z, -planeMax, planeMax);
+
         ImGui::Checkbox("Wireframe", &wireframe);
         ImGui::End();
 
@@ -898,20 +915,20 @@ void processInput(GLFWwindow *window, auto &models){
         (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)) {
         if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
             auto offset = cameraSpeed * cameraFront;
-            cameraPos += offset;
             models.at("unicorn/unicorn.obj").position += offset;
             models.at("unicorn/unicornMane.obj").position += offset;
             models.at("unicorn/unicornTail.obj").position += offset;
+
             models.at("unicorn/unicorn.obj").rotationDegrees = 180.0f;
             models.at("unicorn/unicornMane.obj").rotationDegrees = 180.0f;
             models.at("unicorn/unicornTail.obj").rotationDegrees = 180.0f;
         }
         if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
             auto offset = cameraSpeed * cameraFront;
-            cameraPos -= offset;
             models.at("unicorn/unicorn.obj").position -= offset;
             models.at("unicorn/unicornMane.obj").position -= offset;
             models.at("unicorn/unicornTail.obj").position -= offset;
+
             models.at("unicorn/unicorn.obj").rotationDegrees = 360.0f;
             models.at("unicorn/unicornMane.obj").rotationDegrees = 360.0f;
             models.at("unicorn/unicornTail.obj").rotationDegrees = 360.0f;
@@ -922,6 +939,7 @@ void processInput(GLFWwindow *window, auto &models){
             models.at("unicorn/unicorn.obj").position -= offset;
             models.at("unicorn/unicornMane.obj").position -= offset;
             models.at("unicorn/unicornTail.obj").position -= offset;
+
             models.at("unicorn/unicorn.obj").rotationDegrees = -90.0f;
             models.at("unicorn/unicornMane.obj").rotationDegrees = -90.0f;
             models.at("unicorn/unicornTail.obj").rotationDegrees = -90.0f;
@@ -942,6 +960,7 @@ void processInput(GLFWwindow *window, auto &models){
             models.at("unicorn/unicorn.obj").position += offset;
             models.at("unicorn/unicornMane.obj").position += offset;
             models.at("unicorn/unicornTail.obj").position += offset;
+
             models.at("unicorn/unicorn.obj").rotationDegrees = 90.0f;
             models.at("unicorn/unicornMane.obj").rotationDegrees = 90.0f;
             models.at("unicorn/unicornTail.obj").rotationDegrees = 90.0f;
@@ -999,9 +1018,9 @@ void processInput(GLFWwindow *window, auto &models){
         models.at("unicorn/unicornTail.obj").position.z = -planeMax;
     }
 
-    if (cameraPos.y > floorMin + 2.0f || cameraPos.y < floorMin + 2.0f){
-        cameraPos.y = floorMin + 2.0f;
-    }
+//    if (cameraPos.y > floorMin + 2.0f || cameraPos.y < floorMin + 2.0f){
+//        cameraPos.y = floorMin + 2.0f;
+//    }
     if (models.at("unicorn/unicorn.obj").position.y > floorMin || models.at("unicorn/unicorn.obj").position.y < floorMin){
         models.at("unicorn/unicorn.obj").position.y = floorMin;
         models.at("unicorn/unicornMane.obj").position.y = floorMin;
