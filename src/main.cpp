@@ -54,11 +54,12 @@ unsigned int textureColorBuffer;
 ImVec2 glWindowSize = ImVec2(SCR_WIDTH, SCR_HEIGHT);
 ImVec2 frameBufferSize = glWindowSize;
 
-const float planeMax = 20.0f;
+const float planeMaxWidth = 10.0f;
+const float planeMaxHeight = 200.0f;
 const float floorMin = 0.0f;
 
 // Camera
-glm::vec3 cameraPos = glm::vec3(0.0f, 10.0f, planeMax);
+glm::vec3 cameraPos = glm::vec3(0.0f, 4.0f, planeMaxHeight + 10.0f);
 glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f,  0.0f);
 
@@ -68,10 +69,10 @@ bool firstMouse = true;
 
 float yaw = -90.0f;	// yaw is initialized to -90.0 degrees since a yaw of 0.0 results in a direction vector pointing to the right, so we initially rotate a bit to the left.
 float pitch = 0.0f;
-float fieldOfView = 70.0f;
+float fieldOfView = 60.0f;
 
 // Lighting
-glm::vec3 lightPos(0.0f, 5.0f, 0.0f);
+glm::vec3 lightPos(0.0f, 10.0f, 0.0f);
 
 // Timing
 float deltaTime = 0.0f;	// time between current frame and last frame
@@ -115,7 +116,7 @@ void createTexture(GLuint& texture, const std::string& path, bool alpha){
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     // load image, create texture and generate mipmaps
-    stbi_set_flip_vertically_on_load(true); // tell stb_image.h to flip loaded texture's on the y-axis.
+    stbi_set_flip_vertically_on_load(false); // tell stb_image.h to flip loaded texture's on the y-axis.
     int width, height, nrChannels;
     unsigned char *data = stbi_load(std::filesystem::path(path).c_str(), &width, &height, &nrChannels, 0);
     if (data){
@@ -253,13 +254,13 @@ void renderWabbit(Shader &shader, auto &wabbitModel, auto &textures, auto &curre
     float offset = wabbitModel.movementOffset;
 
     float x = wabbitModel.position.x;
-    if (x >= planeMax){
+    if (x >= planeMaxWidth){
         offset = -abs(offset);
-        x = planeMax + offset;
+        x = planeMaxWidth + offset;
     }
-    else if (x <= -planeMax){
+    else if (x <= -planeMaxWidth){
         offset = abs(offset);
-        x = -planeMax + offset;
+        x = -planeMaxWidth + offset;
     }
     else {
         x = x + offset;
@@ -310,13 +311,13 @@ void renderFrog(Shader &shader, auto &frogModel, auto &textures, auto &currentFr
     float degrees = frogModel.rotationDegrees;
     float x = frogModel.position.x;
 
-    if (x >= planeMax){
+    if (x >= planeMaxWidth){
         offset = -abs(offset);
-        x = planeMax + offset;
+        x = planeMaxWidth + offset;
     }
-    else if (x <= -planeMax){
+    else if (x <= -planeMaxWidth){
         offset = abs(offset);
-        x = -planeMax + offset;
+        x = -planeMaxWidth + offset;
     }
     else {
         x = x + offset;
@@ -360,13 +361,18 @@ void renderFrog(Shader &shader, auto &frogModel, auto &textures, auto &currentFr
 
 void renderPlane(Shader &shader, auto &mesh, auto &texture, auto &depthMap, bool depthOnly = false){
     shader.use();
+    shader.setFloat("dif", 0.5);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture);
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, depthMap);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glm::mat4 model = glm::mat4(1.0f);
     model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
-    model = glm::scale(model, glm::vec3(planeMax, 10.0f, planeMax));
+    model = glm::scale(model, glm::vec3(planeMaxWidth, 10.0f, planeMaxHeight));
     shader.setMat4("model", model);
     mesh.Draw(shader);
     glActiveTexture(GL_TEXTURE0);
@@ -389,10 +395,19 @@ void renderMysteryCubes(Shader &shader, auto &mesh, auto &count, auto &positions
 
 void renderSkyDome(Shader &shader, auto &mesh, auto &texture, auto &currentFrame) {
     shader.use();
+    shader.setInt("shadowMap", 0);
+    shader.setFloat("amb", 0.5);
+    shader.setFloat("dif", 0.0);
     glBindTexture(GL_TEXTURE_2D, texture);
+//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glm::mat4 model = glm::mat4(1.0f);
     model = glm::rotate(model, currentFrame * 0.01f, glm::vec3(0.0f, 1.0f, 0.0f));
-    model = glm::scale(model, glm::vec3(200.0f, 200.0f, 200.0f));
+    model = glm::scale(model, glm::vec3(planeMaxHeight * 10.0f,
+                                        planeMaxHeight * 4.0f,
+                                        planeMaxHeight * 10.0f));
     model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
     shader.setMat4("model", model);
     mesh.Draw(shader);
@@ -400,8 +415,8 @@ void renderSkyDome(Shader &shader, auto &mesh, auto &texture, auto &currentFrame
 }
 
 void renderDepth(auto &shaders, auto &models, auto &textures, auto &currentFrame, auto &depthMap, auto &grassCount){
-    // Pass projection matrix to shader
-    glm::mat4 projection = glm::perspective(glm::radians(fieldOfView), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+    // Pass projection matrix to shader (FOV, aspect, near, far)
+    glm::mat4 projection = glm::perspective(glm::radians(fieldOfView), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 10000.0f);
     // Camera/view transformation
     glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
     // Model. Make sure to initialize matrix to identity matrix first
@@ -422,17 +437,16 @@ void renderDepth(auto &shaders, auto &models, auto &textures, auto &currentFrame
     renderUnicornMane(shaders.at("shadowMappingDepth"), models.at("unicorn/unicornMane.obj"), textures);
     renderUnicornTail(shaders.at("shadowMappingDepth"), models.at("unicorn/unicornTail.obj"), textures);
     renderGrass(shaders.at("shadowMappingDepth"), models.at("grass/grass.obj"), textures, grassCount);
+    glActiveTexture(GL_TEXTURE0);
 }
 
 void render(auto &shaders, auto &models, auto &textures, auto &currentFrame, auto &depthMap, auto &grassCount){
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-//    glActiveTexture(GL_TEXTURE0);
-//    glBindTexture(GL_TEXTURE_2D, textures.at("rock.jpeg"));
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, depthMap);
 
-    // Pass projection matrix to shader
-    glm::mat4 projection = glm::perspective(glm::radians(fieldOfView), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+    // Pass projection matrix to shader (FOV, aspect, near, far)
+    glm::mat4 projection = glm::perspective(glm::radians(fieldOfView), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 10000.0f);
     // Camera/view transformation
     glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
     // Model. Make sure to initialize matrix to identity matrix first
@@ -455,6 +469,7 @@ void render(auto &shaders, auto &models, auto &textures, auto &currentFrame, aut
     renderUnicornMane(shaders.at("unicornMane"), models.at("unicorn/unicornMane.obj"), textures);
     renderUnicornTail(shaders.at("unicornTail"), models.at("unicorn/unicornTail.obj"), textures);
 //    renderGrass(shaders.at("default"), models.at("grass/grass.obj"), textures, grassCount);
+    glActiveTexture(GL_TEXTURE0);
 }
 
 int main(){
@@ -522,8 +537,10 @@ int main(){
             "mario_mystery.png",
             "rock.jpeg",
             "skydome.jpeg",
-            "wood.jpg",
-            "space.png"
+            "space.png",
+            "space.jpeg",
+            "trees.jpg",
+            "wood.jpg"
     };
     std::map<std::string, unsigned int> textures;
     for (const auto &textureName : textureNames){
@@ -554,9 +571,9 @@ int main(){
     // Static world space positions of our cubes
     for (unsigned int n = 0; n < cubeCount; n++){
         cubePositions.emplace_back(
-                randomFloat(-planeMax, planeMax),
+                randomFloat(-planeMaxWidth, planeMaxWidth),
                 randomFloat(2.5f, 6.0f),
-                randomFloat(-planeMax, planeMax)
+                randomFloat(-planeMaxHeight, planeMaxHeight)
         );
     }
 
@@ -567,26 +584,29 @@ int main(){
     for (unsigned int i = 0; i < grassCount; i++){
         glm::mat4 model = glm::mat4(1.0f);
         model = glm::rotate(model, glm::radians(randomFloat(1.0f, 270.0f)), glm::vec3(0.0f, 1.0f, 0.0f));
-        model = glm::translate(model, glm::vec3(randomFloat(-planeMax, planeMax),
+        model = glm::translate(model, glm::vec3(randomFloat(-planeMaxWidth, planeMaxWidth),
                                                 0.0f,
-                                                randomFloat(-planeMax, planeMax))
+                                                randomFloat(-planeMaxHeight, planeMaxHeight))
         );
         grassPositions[i] = model;
     }
 
     // Init models
     stbi_set_flip_vertically_on_load(false);
+    models.at("unicorn/unicorn.obj").position = glm::vec3(0.0f, 0.0f, planeMaxHeight);
     models.at("unicorn/unicorn.obj").scale = glm::vec3(0.35f, 0.35f, 0.35f);
     models.at("unicorn/unicorn.obj").rotationDegrees = 180.0f;
+    models.at("unicorn/unicornMane.obj").position = glm::vec3(0.0f, 0.0f, planeMaxHeight);
     models.at("unicorn/unicornMane.obj").scale = glm::vec3(0.35f, 0.35f, 0.35f);
     models.at("unicorn/unicornMane.obj").rotationDegrees = 180.0f;
+    models.at("unicorn/unicornTail.obj").position = glm::vec3(0.0f, 0.0f, planeMaxHeight);
     models.at("unicorn/unicornTail.obj").scale = glm::vec3(0.35f, 0.35f, 0.35f);
     models.at("unicorn/unicornTail.obj").rotationDegrees = 180.0f;
 
-    models.at("wabbit/wabbit.obj").position = glm::vec3(-planeMax, 0.0f, 0.0f);
+    models.at("wabbit/wabbit.obj").position = glm::vec3(-planeMaxWidth, 0.0f, 0.0f);
     models.at("wabbit/wabbit.obj").movementOffset = 0.04f;
 
-    models.at("frog/frog.obj").position = glm::vec3(planeMax, 0.0f, 0.0f);
+    models.at("frog/frog.obj").position = glm::vec3(planeMaxWidth, 0.0f, 0.0f);
     models.at("frog/frog.obj").movementOffset = 0.03f;
 
     // Setup Dear ImGui context
@@ -610,7 +630,8 @@ int main(){
     initFrameBuffer();
 
     // configure depth map FBO
-    const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
+    const unsigned int SHADOW_WIDTH = 2048;
+    const unsigned int SHADOW_HEIGHT = 2048;
     unsigned int depthMapFBO;
     glGenFramebuffers(1, &depthMapFBO);
     // create depth texture
@@ -692,8 +713,8 @@ int main(){
         glm::mat4 lightView;
         glm::mat4 lightSpaceMatrix;
         float nearPlane = -1.5;
-        float farPlane = planeMax;
-        lightProjection = glm::ortho(-planeMax, planeMax, -planeMax, planeMax, nearPlane, farPlane);
+        float farPlane = planeMaxHeight;
+        lightProjection = glm::ortho(-planeMaxWidth, planeMaxWidth, -planeMaxHeight, planeMaxHeight, nearPlane, farPlane);
         // eye, center, up
         lightView = glm::lookAt(lightPos, models.at("unicorn/unicorn.obj").position, glm::vec3(0.0, 1.0, 0.0));
         lightSpaceMatrix = lightProjection * lightView;
@@ -722,6 +743,9 @@ int main(){
             shaders.at(shader).setMat4("lightSpaceMatrix", lightSpaceMatrix);
             shaders.at(shader).setInt("diffuseTexture", 0);
             shaders.at(shader).setInt("shadowMap", 1);
+            shaders.at(shader).setFloat("amb", 0.8);
+            shaders.at(shader).setFloat("dif", 0.2);
+            shaders.at(shader).setFloat("spc", 0.0);
         }
 
         // Start the Dear ImGui frame
@@ -849,17 +873,15 @@ int main(){
         ImGui::SliderFloat("lAmbient", &lightAmbient, 0.0, 1.0);
         ImGui::SliderFloat("lDiffuse", &lightDiffuse, 0.0, 1.0);
 
-        ImGui::SliderFloat("light.x", &lightPos.x, -planeMax - 10, planeMax + 10);
+        ImGui::SliderFloat("light.x", &lightPos.x, -planeMaxWidth - 10, planeMaxWidth + 10);
         ImGui::SliderFloat("light.y", &lightPos.y, -1, 300);
-        ImGui::SliderFloat("light.z", &lightPos.z, -planeMax - 10, planeMax + 10);
+        ImGui::SliderFloat("light.z", &lightPos.z, -planeMaxHeight - 10, planeMaxHeight + 10);
 
-//        ImGui::SliderFloat("cameraFront.x", &cameraFront.x, -20.0, 20.0);
-//        ImGui::SliderFloat("cameraFront.y", &cameraFront.y, -20.0, 20.0);
-//        ImGui::SliderFloat("cameraFront.z", &cameraFront.z, -20.0, 20.0);
+        ImGui::SliderFloat("FOV", &fieldOfView, -10, planeMaxHeight + 10);
 
-        ImGui::SliderFloat("cameraPos.x", &cameraPos.x, -planeMax, planeMax);
+        ImGui::SliderFloat("cameraPos.x", &cameraPos.x, -planeMaxWidth, planeMaxWidth);
         ImGui::SliderFloat("cameraPos.y", &cameraPos.y, -1, 300);
-        ImGui::SliderFloat("cameraPos.z", &cameraPos.z, -planeMax, planeMax);
+        ImGui::SliderFloat("cameraPos.z", &cameraPos.z, -planeMaxHeight, planeMaxHeight);
 
         ImGui::Checkbox("Wireframe", &wireframe);
         ImGui::End();
@@ -905,9 +927,12 @@ void processInput(GLFWwindow *window, auto &models){
         glfwSetWindowShouldClose(window, true);
     }
 
-    float cameraSpeed = 3.0f * deltaTime;
+    float cameraSpeed = 8.0f * deltaTime;
     if (glfwGetKey(window, (GLFW_KEY_RIGHT_SHIFT)) || glfwGetKey(window, (GLFW_KEY_LEFT_SHIFT)) == GLFW_PRESS){
         cameraSpeed *= 3.0f;
+        models.at("unicorn/unicorn.obj").position.y = floorMin + 0.5f;
+        models.at("unicorn/unicornMane.obj").position.y = floorMin + 0.5f;
+        models.at("unicorn/unicornTail.obj").position.y = floorMin + 0.5f;
     }
     if ((glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) ||
         (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) ||
@@ -984,38 +1009,38 @@ void processInput(GLFWwindow *window, auto &models){
         }
     }
 
-    if (cameraPos.x > planeMax){
-        cameraPos.x = planeMax;
+    if (cameraPos.x > planeMaxWidth){
+        cameraPos.x = planeMaxWidth;
     }
-    if (cameraPos.x < -planeMax){
-        cameraPos.x = -planeMax;
+    if (cameraPos.x < -planeMaxWidth){
+        cameraPos.x = -planeMaxWidth;
     }
-    if (cameraPos.z > planeMax + 2.0f){
-        cameraPos.z = planeMax + 2.0f;
-    }
-    if (cameraPos.z < -planeMax + 4.0f){
-        cameraPos.z = -planeMax + 4.0f;
-    }
+//    if (cameraPos.z > planeMax + 2.0f){
+//        cameraPos.z = planeMax + 2.0f;
+//    }
+//    if (cameraPos.z < -planeMax + 4.0f){
+//        cameraPos.z = -planeMax + 4.0f;
+//    }
 
-    if (models.at("unicorn/unicorn.obj").position.x > planeMax){
-        models.at("unicorn/unicorn.obj").position.x = planeMax;
-        models.at("unicorn/unicornMane.obj").position.x = planeMax;
-        models.at("unicorn/unicornTail.obj").position.x = planeMax;
+    if (models.at("unicorn/unicorn.obj").position.x > planeMaxWidth){
+        models.at("unicorn/unicorn.obj").position.x = planeMaxWidth;
+        models.at("unicorn/unicornMane.obj").position.x = planeMaxWidth;
+        models.at("unicorn/unicornTail.obj").position.x = planeMaxWidth;
     }
-    if (models.at("unicorn/unicorn.obj").position.x < -planeMax){
-        models.at("unicorn/unicorn.obj").position.x = -planeMax;
-        models.at("unicorn/unicornMane.obj").position.x = -planeMax;
-        models.at("unicorn/unicornTail.obj").position.x = -planeMax;
+    if (models.at("unicorn/unicorn.obj").position.x < -planeMaxWidth){
+        models.at("unicorn/unicorn.obj").position.x = -planeMaxWidth;
+        models.at("unicorn/unicornMane.obj").position.x = -planeMaxWidth;
+        models.at("unicorn/unicornTail.obj").position.x = -planeMaxWidth;
     }
-    if (models.at("unicorn/unicorn.obj").position.z > planeMax){
-        models.at("unicorn/unicorn.obj").position.z = planeMax;
-        models.at("unicorn/unicornMane.obj").position.z = planeMax;
-        models.at("unicorn/unicornTail.obj").position.z = planeMax;
+    if (models.at("unicorn/unicorn.obj").position.z > planeMaxHeight){
+        models.at("unicorn/unicorn.obj").position.z = planeMaxHeight;
+        models.at("unicorn/unicornMane.obj").position.z = planeMaxHeight;
+        models.at("unicorn/unicornTail.obj").position.z = planeMaxHeight;
     }
-    if (models.at("unicorn/unicorn.obj").position.z < -planeMax){
-        models.at("unicorn/unicorn.obj").position.z = -planeMax;
-        models.at("unicorn/unicornMane.obj").position.z = -planeMax;
-        models.at("unicorn/unicornTail.obj").position.z = -planeMax;
+    if (models.at("unicorn/unicorn.obj").position.z < -planeMaxHeight){
+        models.at("unicorn/unicorn.obj").position.z = -planeMaxHeight;
+        models.at("unicorn/unicornMane.obj").position.z = -planeMaxHeight;
+        models.at("unicorn/unicornTail.obj").position.z = -planeMaxHeight;
     }
 
 //    if (cameraPos.y > floorMin + 2.0f || cameraPos.y < floorMin + 2.0f){
@@ -1027,9 +1052,10 @@ void processInput(GLFWwindow *window, auto &models){
         models.at("unicorn/unicornTail.obj").position.y = floorMin;
     }
 
-    lightPos = models.at("unicorn/unicorn.obj").position;
-    lightPos.z = models.at("unicorn/unicorn.obj").position.z + 0.5f;
-    lightPos.y = 10.0f;
+    cameraPos.z = models.at("unicorn/unicorn.obj").position.z + 10.0f;
+    lightPos.x = models.at("unicorn/unicorn.obj").position.x;
+    lightPos.z = models.at("unicorn/unicorn.obj").position.z + 1.0f;
+//    lightPos.y = 7.0f;
 }
 
 void framebufferSizeCallback(GLFWwindow* window, int width, int height){
