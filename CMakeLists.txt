@@ -27,11 +27,11 @@ endif()
 
 include(${CMAKE_BINARY_DIR}/conan.cmake)
 conan_cmake_configure(REQUIRES cmake/3.21.3
-        glfw/3.3.4
+        glfw/3.3.6
         glew/2.2.0
         imgui/1.86
         glm/0.9.9.8
-        stb/cci.20210713
+        stb/cci.20210910
         assimp/5.1.0
         openal/1.21.1
         freetype/2.11.1

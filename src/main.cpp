@@ -24,8 +24,10 @@
 #include <filesystem>
 #include <string>
 #include <cstdlib>
-#include "include/helpers/Shader.h"
 #include "include/helpers/Model.h"
+#include "include/helpers/Animator.h"
+#include "include/helpers/ModelAnimation.h"
+#include "include/helpers/Shader.h"
 #include <vector>
 #include <map>
 #include <random>
@@ -147,9 +149,9 @@ void playerJump(float& currentFrame, auto &models){
         float y = amplitude * (glm::sin(speed * x)) + 1.0;
         if (y >= playerView) {
 //            cameraPos.y = y + floorOffset;
-            models.at("unicorn/unicorn.obj").position.y = y;
-            models.at("unicorn/unicornMane.obj").position.y = y;
-            models.at("unicorn/unicornTail.obj").position.y = y;
+            models.at("unicorn/unicorn.glb").position.y = y;
+            models.at("unicorn/unicornMane.dae").position.y = y;
+            models.at("unicorn/unicornTail.dae").position.y = y;
         }
         else {
             jump = false;
@@ -198,8 +200,12 @@ void renderGrass(Shader &shader, auto &grassModel, auto &textures, auto grassCou
     glActiveTexture(GL_TEXTURE0);
 }
 
-void renderUnicorn(Shader &shader, auto &unicornModel, auto &textures){
+void renderUnicorn(Shader &shader, auto &unicornModel, auto &textures, auto &animator){
+    auto transforms = animator.GetFinalBoneMatrices();
     shader.use();
+    for (int i = 0; i < transforms.size(); ++i) {
+        shader.setMat4("finalBonesMatrices[" + std::to_string(i) + "]", transforms[i]);
+    }
     glm::mat4 model = glm::mat4(1.0f);
     model = glm::translate(model, unicornModel.position);
     model = glm::rotate(model, glm::radians(unicornModel.rotationDegrees), unicornModel.rotationAxis);
@@ -414,7 +420,7 @@ void renderSkyDome(Shader &shader, auto &mesh, auto &texture, auto &currentFrame
     glActiveTexture(GL_TEXTURE0);
 }
 
-void renderDepth(auto &shaders, auto &models, auto &textures, auto &currentFrame, auto &depthMap, auto &grassCount){
+void renderDepth(auto &shaders, auto &models, auto &textures, auto &currentFrame, auto &depthMap, auto &grassCount, auto &animator){
     // Pass projection matrix to shader (FOV, aspect, near, far)
     glm::mat4 projection = glm::perspective(glm::radians(fieldOfView), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 10000.0f);
     // Camera/view transformation
@@ -431,16 +437,16 @@ void renderDepth(auto &shaders, auto &models, auto &textures, auto &currentFrame
     renderPlane(shaders.at("shadowMappingDepth"), models.at("primitives/plane.obj"), textures.at("grass.png"), depthMap, true);
     renderMysteryCubes(shaders.at("shadowMappingDepth"), models.at("primitives/cube.obj"), cubeCount, cubePositions, textures.at("mario_mystery.png"), currentFrame);
     renderSkyDome(shaders.at("shadowMappingDepth"), models.at("primitives/sphere.obj"), textures.at("skydome.jpeg"), currentFrame);
-    renderWabbit(shaders.at("shadowMappingDepth"), models.at("wabbit/wabbit.obj"), textures, currentFrame);
-    renderFrog(shaders.at("shadowMappingDepth"), models.at("frog/frog.obj"), textures, currentFrame);
-    renderUnicorn(shaders.at("shadowMappingDepth"), models.at("unicorn/unicorn.obj"), textures);
-    renderUnicornMane(shaders.at("shadowMappingDepth"), models.at("unicorn/unicornMane.obj"), textures);
-    renderUnicornTail(shaders.at("shadowMappingDepth"), models.at("unicorn/unicornTail.obj"), textures);
-    renderGrass(shaders.at("shadowMappingDepth"), models.at("grass/grass.obj"), textures, grassCount);
+    renderWabbit(shaders.at("shadowMappingDepth"), models.at("wabbit/wabbit.dae"), textures, currentFrame);
+    renderFrog(shaders.at("shadowMappingDepth"), models.at("frog/frog.dae"), textures, currentFrame);
+    renderUnicorn(shaders.at("shadowMappingDepth"), models.at("unicorn/unicorn.glb"), textures, animator);
+    renderUnicornMane(shaders.at("shadowMappingDepth"), models.at("unicorn/unicornMane.dae"), textures);
+    renderUnicornTail(shaders.at("shadowMappingDepth"), models.at("unicorn/unicornTail.dae"), textures);
+    renderGrass(shaders.at("shadowMappingDepth"), models.at("grass/grass.dae"), textures, grassCount);
     glActiveTexture(GL_TEXTURE0);
 }
 
-void render(auto &shaders, auto &models, auto &textures, auto &currentFrame, auto &depthMap, auto &grassCount){
+void render(auto &shaders, auto &models, auto &textures, auto &currentFrame, auto &depthMap, auto &grassCount, auto &animator){
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, depthMap);
@@ -463,12 +469,12 @@ void render(auto &shaders, auto &models, auto &textures, auto &currentFrame, aut
     renderPlane(shaders.at("default"), models.at("primitives/plane.obj"), textures.at("grass.png"), depthMap);
     renderMysteryCubes(shaders.at("default"), models.at("primitives/cube.obj"), cubeCount, cubePositions, textures.at("mario_mystery.png"), currentFrame);
     renderSkyDome(shaders.at("default"), models.at("primitives/sphere.obj"), textures.at("skydome.jpeg"), currentFrame);
-    renderFrog(shaders.at("frog"), models.at("frog/frog.obj"), textures, currentFrame);
-    renderWabbit(shaders.at("default"), models.at("wabbit/wabbit.obj"), textures, currentFrame);
-    renderUnicorn(shaders.at("unicornBody"), models.at("unicorn/unicorn.obj"), textures);
-    renderUnicornMane(shaders.at("unicornMane"), models.at("unicorn/unicornMane.obj"), textures);
-    renderUnicornTail(shaders.at("unicornTail"), models.at("unicorn/unicornTail.obj"), textures);
-//    renderGrass(shaders.at("default"), models.at("grass/grass.obj"), textures, grassCount);
+    renderFrog(shaders.at("frog"), models.at("frog/frog.dae"), textures, currentFrame);
+    renderWabbit(shaders.at("default"), models.at("wabbit/wabbit.dae"), textures, currentFrame);
+    renderUnicorn(shaders.at("unicornBody"), models.at("unicorn/unicorn.glb"), textures, animator);
+    renderUnicornMane(shaders.at("unicornMane"), models.at("unicorn/unicornMane.dae"), textures);
+    renderUnicornTail(shaders.at("unicornTail"), models.at("unicorn/unicornTail.dae"), textures);
+//    renderGrass(shaders.at("default"), models.at("grass/grass.dae"), textures, grassCount);
     glActiveTexture(GL_TEXTURE0);
 }
 
@@ -529,18 +535,10 @@ int main(){
 
     // Load and create a texture
     std::vector<std::string> textureNames = {
-            "awesomeface.png",
             "clouds.jpeg",
-            "container.jpeg",
-            "fur.jpeg",
             "grass.png",
             "mario_mystery.png",
-            "rock.jpeg",
-            "skydome.jpeg",
-            "space.png",
-            "space.jpeg",
-            "trees.jpg",
-            "wood.jpg"
+            "skydome.jpeg"
     };
     std::map<std::string, unsigned int> textures;
     for (const auto &textureName : textureNames){
@@ -551,22 +549,25 @@ int main(){
     }
 
     std::vector<std::string> modelNames = {
-            "unicorn/unicorn.obj",
-            "unicorn/unicornMane.obj",
-            "unicorn/unicornTail.obj",
-            "wabbit/wabbit.obj",
-            "frog/frog.obj",
-            "grass/grass.obj",
+            "unicorn/unicorn.glb",
+            "unicorn/unicornMane.dae",
+            "unicorn/unicornTail.dae",
+            "wabbit/wabbit.dae",
+            "frog/frog.dae",
+            "grass/grass.dae",
             "primitives/plane.obj",
             "primitives/cube.obj",
             "primitives/sphere.obj"
     };
-    std::map<std::string, Model> models;
+    std::map<std::string, ModelAnimation> models;
     for (const auto& model: modelNames){
         std::string path = fmt::format("../src/include/assets/{}", model);
-        models.insert({model, Model(path)});
+        models.insert({model, ModelAnimation(path)});
     }
-
+    std::string path = "../src/include/assets/unicorn/unicorn.glb";
+//    ModelAnimation animationModel = ModelAnimation(path);
+    Animation danceAnimation(path, &models.at("unicorn/unicorn.glb"));
+    Animator animator(&danceAnimation);
 
     // Static world space positions of our cubes
     for (unsigned int n = 0; n < cubeCount; n++){
@@ -593,21 +594,22 @@ int main(){
 
     // Init models
     stbi_set_flip_vertically_on_load(false);
-    models.at("unicorn/unicorn.obj").position = glm::vec3(0.0f, 0.0f, planeMaxHeight);
-    models.at("unicorn/unicorn.obj").scale = glm::vec3(0.35f, 0.35f, 0.35f);
-    models.at("unicorn/unicorn.obj").rotationDegrees = 180.0f;
-    models.at("unicorn/unicornMane.obj").position = glm::vec3(0.0f, 0.0f, planeMaxHeight);
-    models.at("unicorn/unicornMane.obj").scale = glm::vec3(0.35f, 0.35f, 0.35f);
-    models.at("unicorn/unicornMane.obj").rotationDegrees = 180.0f;
-    models.at("unicorn/unicornTail.obj").position = glm::vec3(0.0f, 0.0f, planeMaxHeight);
-    models.at("unicorn/unicornTail.obj").scale = glm::vec3(0.35f, 0.35f, 0.35f);
-    models.at("unicorn/unicornTail.obj").rotationDegrees = 180.0f;
+    models.at("unicorn/unicorn.glb").position = glm::vec3(0.0f, 0.0f, planeMaxHeight);
+//    models.at("unicorn/unicorn.glb").scale = glm::vec3(0.01f, 0.01f, 0.01f);
+//    models.at("unicorn/unicorn.glb").scale = glm::vec3(0.35f, 0.35f, 0.35f);
+    models.at("unicorn/unicorn.glb").rotationDegrees = 180.0f;
+    models.at("unicorn/unicornMane.dae").position = glm::vec3(0.0f, 0.0f, planeMaxHeight);
+//    models.at("unicorn/unicornMane.dae").scale = glm::vec3(0.35f, 0.35f, 0.35f);
+    models.at("unicorn/unicornMane.dae").rotationDegrees = 180.0f;
+    models.at("unicorn/unicornTail.dae").position = glm::vec3(0.0f, 0.0f, planeMaxHeight);
+//    models.at("unicorn/unicornTail.dae").scale = glm::vec3(0.35f, 0.35f, 0.35f);
+    models.at("unicorn/unicornTail.dae").rotationDegrees = 180.0f;
 
-    models.at("wabbit/wabbit.obj").position = glm::vec3(-planeMaxWidth, 0.0f, 0.0f);
-    models.at("wabbit/wabbit.obj").movementOffset = 0.04f;
+    models.at("wabbit/wabbit.dae").position = glm::vec3(-planeMaxWidth, 0.0f, 0.0f);
+    models.at("wabbit/wabbit.dae").movementOffset = 0.04f;
 
-    models.at("frog/frog.obj").position = glm::vec3(planeMaxWidth, 0.0f, 0.0f);
-    models.at("frog/frog.obj").movementOffset = 0.03f;
+    models.at("frog/frog.dae").position = glm::vec3(planeMaxWidth, 0.0f, 0.0f);
+    models.at("frog/frog.dae").movementOffset = 0.03f;
 
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
@@ -672,9 +674,9 @@ int main(){
 
     // set transformation matrices as an instance vertex attribute (with divisor 1)
     // -----------------------------------------------------------------------------------------------------------------------------------
-    for (unsigned int i = 0; i < models.at("grass/grass.obj").meshes.size(); i++)
+    for (unsigned int i = 0; i < models.at("grass/grass.dae").meshes.size(); i++)
     {
-        unsigned int VAO = models.at("grass/grass.obj").meshes[i].VAO;
+        unsigned int VAO = models.at("grass/grass.dae").meshes[i].VAO;
         glBindVertexArray(VAO);
         // set attribute pointers for matrix (4 times vec4)
         glEnableVertexAttribArray(3);
@@ -701,6 +703,8 @@ int main(){
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
+        animator.UpdateAnimation(deltaTime);
+
         // Wireframe-only
         wireframe ? glPolygonMode(GL_FRONT_AND_BACK, GL_LINE) : glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
@@ -716,7 +720,7 @@ int main(){
         float farPlane = planeMaxHeight;
         lightProjection = glm::ortho(-planeMaxWidth, planeMaxWidth, -planeMaxHeight, planeMaxHeight, nearPlane, farPlane);
         // eye, center, up
-        lightView = glm::lookAt(lightPos, models.at("unicorn/unicorn.obj").position, glm::vec3(0.0, 1.0, 0.0));
+        lightView = glm::lookAt(lightPos, models.at("unicorn/unicorn.glb").position, glm::vec3(0.0, 1.0, 0.0));
         lightSpaceMatrix = lightProjection * lightView;
         // render scene from light's point of view
         shaders.at("shadowMappingDepth").use();
@@ -727,7 +731,7 @@ int main(){
         glClear(GL_DEPTH_BUFFER_BIT);
         glActiveTexture(GL_TEXTURE0);
         glCullFace(GL_FRONT);
-        renderDepth(shaders, models, textures, currentFrame, depthMap, grassCount);
+        renderDepth(shaders, models, textures, currentFrame, depthMap, grassCount, animator);
         glCullFace(GL_BACK);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -829,7 +833,7 @@ int main(){
             glBindFramebuffer(GL_FRAMEBUFFER, frameBufferObject);
             // ============================================================================================================================
 
-            render(shaders, models, textures, currentFrame, depthMap, grassCount);
+            render(shaders, models, textures, currentFrame, depthMap, grassCount, animator);
 
             // ============================================================================================================================
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -930,9 +934,9 @@ void processInput(GLFWwindow *window, auto &models){
     float cameraSpeed = 8.0f * deltaTime;
     if (glfwGetKey(window, (GLFW_KEY_RIGHT_SHIFT)) || glfwGetKey(window, (GLFW_KEY_LEFT_SHIFT)) == GLFW_PRESS){
         cameraSpeed *= 3.0f;
-        models.at("unicorn/unicorn.obj").position.y = floorMin + 0.5f;
-        models.at("unicorn/unicornMane.obj").position.y = floorMin + 0.5f;
-        models.at("unicorn/unicornTail.obj").position.y = floorMin + 0.5f;
+        models.at("unicorn/unicorn.glb").position.y = floorMin + 0.5f;
+        models.at("unicorn/unicornMane.dae").position.y = floorMin + 0.5f;
+        models.at("unicorn/unicornTail.dae").position.y = floorMin + 0.5f;
     }
     if ((glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) ||
         (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) ||
@@ -940,64 +944,64 @@ void processInput(GLFWwindow *window, auto &models){
         (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)) {
         if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
             auto offset = cameraSpeed * cameraFront;
-            models.at("unicorn/unicorn.obj").position += offset;
-            models.at("unicorn/unicornMane.obj").position += offset;
-            models.at("unicorn/unicornTail.obj").position += offset;
+            models.at("unicorn/unicorn.glb").position += offset;
+            models.at("unicorn/unicornMane.dae").position += offset;
+            models.at("unicorn/unicornTail.dae").position += offset;
 
-            models.at("unicorn/unicorn.obj").rotationDegrees = 180.0f;
-            models.at("unicorn/unicornMane.obj").rotationDegrees = 180.0f;
-            models.at("unicorn/unicornTail.obj").rotationDegrees = 180.0f;
+            models.at("unicorn/unicorn.glb").rotationDegrees = 180.0f;
+            models.at("unicorn/unicornMane.dae").rotationDegrees = 180.0f;
+            models.at("unicorn/unicornTail.dae").rotationDegrees = 180.0f;
         }
         if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
             auto offset = cameraSpeed * cameraFront;
-            models.at("unicorn/unicorn.obj").position -= offset;
-            models.at("unicorn/unicornMane.obj").position -= offset;
-            models.at("unicorn/unicornTail.obj").position -= offset;
+            models.at("unicorn/unicorn.glb").position -= offset;
+            models.at("unicorn/unicornMane.dae").position -= offset;
+            models.at("unicorn/unicornTail.dae").position -= offset;
 
-            models.at("unicorn/unicorn.obj").rotationDegrees = 360.0f;
-            models.at("unicorn/unicornMane.obj").rotationDegrees = 360.0f;
-            models.at("unicorn/unicornTail.obj").rotationDegrees = 360.0f;
+            models.at("unicorn/unicorn.glb").rotationDegrees = 360.0f;
+            models.at("unicorn/unicornMane.dae").rotationDegrees = 360.0f;
+            models.at("unicorn/unicornTail.dae").rotationDegrees = 360.0f;
         }
         if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
             auto offset = glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
             cameraPos -= offset;
-            models.at("unicorn/unicorn.obj").position -= offset;
-            models.at("unicorn/unicornMane.obj").position -= offset;
-            models.at("unicorn/unicornTail.obj").position -= offset;
+            models.at("unicorn/unicorn.glb").position -= offset;
+            models.at("unicorn/unicornMane.dae").position -= offset;
+            models.at("unicorn/unicornTail.dae").position -= offset;
 
-            models.at("unicorn/unicorn.obj").rotationDegrees = -90.0f;
-            models.at("unicorn/unicornMane.obj").rotationDegrees = -90.0f;
-            models.at("unicorn/unicornTail.obj").rotationDegrees = -90.0f;
+            models.at("unicorn/unicorn.glb").rotationDegrees = -90.0f;
+            models.at("unicorn/unicornMane.dae").rotationDegrees = -90.0f;
+            models.at("unicorn/unicornTail.dae").rotationDegrees = -90.0f;
             if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
-                models.at("unicorn/unicorn.obj").rotationDegrees -= 45.0f;
-                models.at("unicorn/unicornMane.obj").rotationDegrees -= 45.0f;
-                models.at("unicorn/unicornTail.obj").rotationDegrees -= 45.0f;
+                models.at("unicorn/unicorn.glb").rotationDegrees -= 45.0f;
+                models.at("unicorn/unicornMane.dae").rotationDegrees -= 45.0f;
+                models.at("unicorn/unicornTail.dae").rotationDegrees -= 45.0f;
             }
             if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
-                models.at("unicorn/unicorn.obj").rotationDegrees += 45.0f;
-                models.at("unicorn/unicornMane.obj").rotationDegrees += 45.0f;
-                models.at("unicorn/unicornTail.obj").rotationDegrees += 45.0f;
+                models.at("unicorn/unicorn.glb").rotationDegrees += 45.0f;
+                models.at("unicorn/unicornMane.dae").rotationDegrees += 45.0f;
+                models.at("unicorn/unicornTail.dae").rotationDegrees += 45.0f;
             }
         }
         if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
             auto offset = glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
             cameraPos += offset;
-            models.at("unicorn/unicorn.obj").position += offset;
-            models.at("unicorn/unicornMane.obj").position += offset;
-            models.at("unicorn/unicornTail.obj").position += offset;
+            models.at("unicorn/unicorn.glb").position += offset;
+            models.at("unicorn/unicornMane.dae").position += offset;
+            models.at("unicorn/unicornTail.dae").position += offset;
 
-            models.at("unicorn/unicorn.obj").rotationDegrees = 90.0f;
-            models.at("unicorn/unicornMane.obj").rotationDegrees = 90.0f;
-            models.at("unicorn/unicornTail.obj").rotationDegrees = 90.0f;
+            models.at("unicorn/unicorn.glb").rotationDegrees = 90.0f;
+            models.at("unicorn/unicornMane.dae").rotationDegrees = 90.0f;
+            models.at("unicorn/unicornTail.dae").rotationDegrees = 90.0f;
             if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
-                models.at("unicorn/unicorn.obj").rotationDegrees += 45.0f;
-                models.at("unicorn/unicornMane.obj").rotationDegrees += 45.0f;
-                models.at("unicorn/unicornTail.obj").rotationDegrees += 45.0f;
+                models.at("unicorn/unicorn.glb").rotationDegrees += 45.0f;
+                models.at("unicorn/unicornMane.dae").rotationDegrees += 45.0f;
+                models.at("unicorn/unicornTail.dae").rotationDegrees += 45.0f;
             }
             if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
-                models.at("unicorn/unicorn.obj").rotationDegrees -= 45.0f;
-                models.at("unicorn/unicornMane.obj").rotationDegrees -= 45.0f;
-                models.at("unicorn/unicornTail.obj").rotationDegrees -= 45.0f;
+                models.at("unicorn/unicorn.glb").rotationDegrees -= 45.0f;
+                models.at("unicorn/unicornMane.dae").rotationDegrees -= 45.0f;
+                models.at("unicorn/unicornTail.dae").rotationDegrees -= 45.0f;
             }
         }
     }
@@ -1022,39 +1026,39 @@ void processInput(GLFWwindow *window, auto &models){
 //        cameraPos.z = -planeMax + 4.0f;
 //    }
 
-    if (models.at("unicorn/unicorn.obj").position.x > planeMaxWidth){
-        models.at("unicorn/unicorn.obj").position.x = planeMaxWidth;
-        models.at("unicorn/unicornMane.obj").position.x = planeMaxWidth;
-        models.at("unicorn/unicornTail.obj").position.x = planeMaxWidth;
+    if (models.at("unicorn/unicorn.glb").position.x > planeMaxWidth){
+        models.at("unicorn/unicorn.glb").position.x = planeMaxWidth;
+        models.at("unicorn/unicornMane.dae").position.x = planeMaxWidth;
+        models.at("unicorn/unicornTail.dae").position.x = planeMaxWidth;
     }
-    if (models.at("unicorn/unicorn.obj").position.x < -planeMaxWidth){
-        models.at("unicorn/unicorn.obj").position.x = -planeMaxWidth;
-        models.at("unicorn/unicornMane.obj").position.x = -planeMaxWidth;
-        models.at("unicorn/unicornTail.obj").position.x = -planeMaxWidth;
+    if (models.at("unicorn/unicorn.glb").position.x < -planeMaxWidth){
+        models.at("unicorn/unicorn.glb").position.x = -planeMaxWidth;
+        models.at("unicorn/unicornMane.dae").position.x = -planeMaxWidth;
+        models.at("unicorn/unicornTail.dae").position.x = -planeMaxWidth;
     }
-    if (models.at("unicorn/unicorn.obj").position.z > planeMaxHeight){
-        models.at("unicorn/unicorn.obj").position.z = planeMaxHeight;
-        models.at("unicorn/unicornMane.obj").position.z = planeMaxHeight;
-        models.at("unicorn/unicornTail.obj").position.z = planeMaxHeight;
+    if (models.at("unicorn/unicorn.glb").position.z > planeMaxHeight){
+        models.at("unicorn/unicorn.glb").position.z = planeMaxHeight;
+        models.at("unicorn/unicornMane.dae").position.z = planeMaxHeight;
+        models.at("unicorn/unicornTail.dae").position.z = planeMaxHeight;
     }
-    if (models.at("unicorn/unicorn.obj").position.z < -planeMaxHeight){
-        models.at("unicorn/unicorn.obj").position.z = -planeMaxHeight;
-        models.at("unicorn/unicornMane.obj").position.z = -planeMaxHeight;
-        models.at("unicorn/unicornTail.obj").position.z = -planeMaxHeight;
+    if (models.at("unicorn/unicorn.glb").position.z < -planeMaxHeight){
+        models.at("unicorn/unicorn.glb").position.z = -planeMaxHeight;
+        models.at("unicorn/unicornMane.dae").position.z = -planeMaxHeight;
+        models.at("unicorn/unicornTail.dae").position.z = -planeMaxHeight;
     }
 
 //    if (cameraPos.y > floorMin + 2.0f || cameraPos.y < floorMin + 2.0f){
 //        cameraPos.y = floorMin + 2.0f;
 //    }
-    if (models.at("unicorn/unicorn.obj").position.y > floorMin || models.at("unicorn/unicorn.obj").position.y < floorMin){
-        models.at("unicorn/unicorn.obj").position.y = floorMin;
-        models.at("unicorn/unicornMane.obj").position.y = floorMin;
-        models.at("unicorn/unicornTail.obj").position.y = floorMin;
+    if (models.at("unicorn/unicorn.glb").position.y > floorMin || models.at("unicorn/unicorn.glb").position.y < floorMin){
+        models.at("unicorn/unicorn.glb").position.y = floorMin;
+        models.at("unicorn/unicornMane.dae").position.y = floorMin;
+        models.at("unicorn/unicornTail.dae").position.y = floorMin;
     }
 
-    cameraPos.z = models.at("unicorn/unicorn.obj").position.z + 10.0f;
-    lightPos.x = models.at("unicorn/unicorn.obj").position.x;
-    lightPos.z = models.at("unicorn/unicorn.obj").position.z + 1.0f;
+    cameraPos.z = models.at("unicorn/unicorn.glb").position.z + 10.0f;
+    lightPos.x = models.at("unicorn/unicorn.glb").position.x;
+    lightPos.z = models.at("unicorn/unicorn.glb").position.z + 0.5f;
 //    lightPos.y = 7.0f;
 }
 
