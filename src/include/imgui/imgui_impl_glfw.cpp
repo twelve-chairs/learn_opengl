@@ -406,8 +406,8 @@ static void ImGui_ImplGlfw_UpdateGamepads()
     MAP_BUTTON(ImGuiNavInput_Menu,       2);     // Square / X
     MAP_BUTTON(ImGuiNavInput_Input,      3);     // Triangle / Y
     MAP_BUTTON(ImGuiNavInput_DpadLeft,   13);    // D-Pad Left
-    MAP_BUTTON(ImGuiNavInput_DpadRight,  11);    // D-Pad Right
-    MAP_BUTTON(ImGuiNavInput_DpadUp,     10);    // D-Pad Up
+    MAP_BUTTON(ImGuiNavInput_DpadRight,  11);    // D-Pad right
+    MAP_BUTTON(ImGuiNavInput_DpadUp,     10);    // D-Pad up
     MAP_BUTTON(ImGuiNavInput_DpadDown,   12);    // D-Pad Down
     MAP_BUTTON(ImGuiNavInput_FocusPrev,  4);     // L1 / LB
     MAP_BUTTON(ImGuiNavInput_FocusNext,  5);     // R1 / RB
