@@ -12,7 +12,7 @@
 class Animator
 {
 public:
-    explicit Animator(Animation* animation)
+    explicit Animator(Animation *animation)
     {
         m_CurrentTime = 0.0;
         m_CurrentAnimation = animation;
@@ -34,13 +34,13 @@ public:
         }
     }
 
-    void PlayAnimation(Animation* pAnimation)
+    void PlayAnimation(Animation *pAnimation)
     {
         m_CurrentAnimation = pAnimation;
         m_CurrentTime = 0.0f;
     }
 
-    void CalculateBoneTransform(const AssimpNodeData* node, glm::mat4 parentTransform)
+    void CalculateBoneTransform(const AssimpNodeData *node, glm::mat4 parentTransform)
     {
         std::string nodeName = node->name;
         glm::mat4 nodeTransform = node->transformation;

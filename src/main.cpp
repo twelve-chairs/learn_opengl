@@ -10,11 +10,11 @@
 #pragma comment(lib, "legacy_stdio_definitions")
 #endif
 
+#include <vector>
+#include <map>
 #include <filesystem>
 #include <string>
 #include <cstdlib>
-#include <vector>
-#include <map>
 #include <random>
 
 #include <GL/glew.h>
@@ -42,33 +42,24 @@
 
 
 // Window settings
-unsigned int SCR_WIDTH = 1100;
-unsigned int SCR_HEIGHT = 800;
+const unsigned int SCR_WIDTH = 1100;
+const unsigned int SCR_HEIGHT = 800;
 
 // Buffers
-const int VAOs = 1;
-const int VBOs = 5;
-GLuint VAO[VAOs];
-GLuint VBO[VBOs];
-GLuint frameBufferObject;
-GLuint renderBufferObject;
-unsigned int textureColorBuffer;
-
-// OpenGL window default size and position
-ImVec2 glWindowSize = ImVec2(static_cast<float>(SCR_WIDTH), static_cast<float>(SCR_HEIGHT));
-ImVec2 frameBufferSize = glWindowSize;
+const unsigned int VAOs = 1;
+const unsigned int VBOs = 5;
 
 // Scene settings
-int cubeCount = 10;
+const int cubeCount = 10;
+
 std::vector<glm::vec3> cubePositions;
-bool wireframe = false;
 
 // Plane
-auto plane = Platform(randomFloat(50.0f, 400.0f), randomFloat(50.0f, 400.0f), 0.0f);
+const auto plane = Platform(randomFloat(50.0f, 400.0f), randomFloat(50.0f, 400.0f), 0.0f);
 
 // Camera
 auto camera = Camera();
-float lastX = SCR_WIDTH / 2.0f  ;
+float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
 
@@ -76,7 +67,7 @@ bool firstMouse = true;
 auto light = Light();
 
 // Timing
-float deltaTime = 0.0f;	// time between current frame and last frame
+float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 bool jump = false;
 float jumpStart = 0.0f;
@@ -89,7 +80,7 @@ glm::vec3 unicornManeColorTest = glm::vec3(0.765, 0.849, 0.086);
 glm::vec3 unicornTailColorTest = glm::vec3(0.765, 0.450, 0.450);
 
 
-void playerJump(float& currentFrame, auto &models){
+void playerJump(const float &currentFrame, auto &models){
     float floorOffset = 1.0f;
     float amplitude = 0.75f;
     float speed = 6.0f;
@@ -99,7 +90,7 @@ void playerJump(float& currentFrame, auto &models){
     if (x < 0.0) x = 0.0;
 
     if (jump){
-        float y = amplitude * (glm::sin(speed * x)) + 1.0;
+        float y = amplitude * (glm::sin(speed * x)) + 1.0f;
         if (y >= playerView) {
             models.at("unicorn").position.y = y;
             models.at("unicornMane").position.y = y;
@@ -111,13 +102,13 @@ void playerJump(float& currentFrame, auto &models){
     }
 }
 
-void processInput(GLFWwindow *window, auto &camera, auto &models){
+void processInput(GLFWwindow *window, auto &models){
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, true);
     }
 
     float cameraSpeed = 8.0f * deltaTime;
-    if (glfwGetKey(window, (GLFW_KEY_RIGHT_SHIFT)) || glfwGetKey(window, (GLFW_KEY_LEFT_SHIFT)) == GLFW_PRESS){
+    if (glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) || glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS){
         cameraSpeed *= 3.0f;
         models.at("unicorn").position.y = plane.floorMin + 0.5f;
         models.at("unicornMane").position.y = plane.floorMin + 0.5f;
@@ -191,11 +182,9 @@ void processInput(GLFWwindow *window, auto &camera, auto &models){
         }
     }
 
-    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
-        if (!jump) {
-            jumpStart = static_cast<float>(glfwGetTime());
-            jump = true;
-        }
+    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && !jump) {
+        jumpStart = static_cast<float>(glfwGetTime());
+        jump = true;
     }
 
     if (camera.position.x > plane.planeMaxWidth){
@@ -237,15 +226,15 @@ void processInput(GLFWwindow *window, auto &camera, auto &models){
     light.position.z = models.at("unicorn").position.z + 0.5f;
 }
 
-void framebufferSizeCallback(GLFWwindow *window, int width, int height){
+void framebufferSizeCallback([[maybe_unused]] GLFWwindow *window, [[maybe_unused]] int width, [[maybe_unused]] int height){
     // make sure the viewport matches the new window dimensions; note that width and
     // height will be significantly larger than specified on retina displays.
     glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
 }
 
-void mouseCallback(GLFWwindow *window, double xposIn, double yposIn){
-    float xpos = static_cast<float>(xposIn);
-    float ypos = static_cast<float>(yposIn);
+void mouseCallback([[maybe_unused]] GLFWwindow *window, double xposIn, double yposIn){
+    auto xpos = static_cast<float>(xposIn);
+    auto ypos = static_cast<float>(yposIn);
     if (firstMouse)
     {
         lastX = xpos;
@@ -262,11 +251,11 @@ void mouseCallback(GLFWwindow *window, double xposIn, double yposIn){
     camera.ProcessMouseMovement(xoffset, yoffset);
 }
 
-void scrollCallback(GLFWwindow* window, double xoffset, double yoffset){
+void scrollCallback([[maybe_unused]] GLFWwindow *window, [[maybe_unused]] double xoffset, double yoffset){
     camera.ProcessMouseScroll(static_cast<float>(yoffset));
 }
 
-void renderDepth(Camera &camera, auto &shaders, auto &models, auto &textures, auto &currentFrame, auto &depthMap, auto &grassCount, auto &animator){
+void renderDepth(auto &shaders, auto &models, auto &textures, auto &currentFrame, auto &depthMap, auto &grassCount, auto &animator){
     // Pass projection matrix to shader (FOV, aspect, near, far)
     glm::mat4 projection = glm::perspective(glm::radians(camera.zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 10000.0f);
     // Camera/view transformation
@@ -292,7 +281,7 @@ void renderDepth(Camera &camera, auto &shaders, auto &models, auto &textures, au
     glActiveTexture(GL_TEXTURE0);
 }
 
-void render(Camera &camera, auto &shaders, auto &models, auto &textures, auto &currentFrame, auto &depthMap, auto &grassCount, auto &animator){
+void render(auto &shaders, auto &models, auto &textures, auto &currentFrame, auto &depthMap, auto &grassCount, auto &animator){
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, depthMap);
@@ -302,7 +291,7 @@ void render(Camera &camera, auto &shaders, auto &models, auto &textures, auto &c
     // Camera/view transformation
     glm::mat4 view = glm::lookAt(camera.position, camera.position + camera.front, camera.up);
     // Model. Make sure to initialize matrix to identity matrix first
-    glm::mat4 model = glm::mat4(1.0f);
+    auto model = glm::mat4(1.0f);
 
     // view/projection transformations
     for (const auto &each : shaders){
@@ -325,6 +314,18 @@ void render(Camera &camera, auto &shaders, auto &models, auto &textures, auto &c
 }
 
 int main(){
+    GLuint VAO[VAOs];
+    GLuint VBO[VBOs];
+    GLuint frameBufferObject;
+    GLuint renderBufferObject;
+    unsigned int textureColorBuffer;
+
+    // OpenGL window default size and position
+    auto glWindowSize = ImVec2(static_cast<float>(SCR_WIDTH), static_cast<float>(SCR_HEIGHT));
+    ImVec2 frameBufferSize = glWindowSize;
+
+    bool wireframe = false;
+
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
@@ -335,8 +336,8 @@ int main(){
 #endif
 
     // glfw window creation
-    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "twelvechairs", NULL, NULL);
-    if (window == NULL){
+    GLFWwindow* window = glfwCreateWindow(static_cast<int>(SCR_WIDTH), static_cast<int>(SCR_HEIGHT), "twelvechairs", nullptr, nullptr);
+    if (window == nullptr){
         spdlog::error("Failed to create GLFW window");
         glfwTerminate();
         return -1;
@@ -345,16 +346,14 @@ int main(){
     glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
     glfwSetCursorPosCallback(window, mouseCallback);
     glfwSetScrollCallback(window, scrollCallback);
-//    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     // Anti-aliasing
-    glfwWindowHint(GLFW_SAMPLES, 4);
-    glEnable(GL_MULTISAMPLE);
-//
-    glEnable(GL_FRAMEBUFFER_SRGB);
+    glfwWindowHint(GLFW_SAMPLES, 16);
 
+    glEnable(GL_MULTISAMPLE);
+    glEnable(GL_FRAMEBUFFER_SRGB);
     glEnable(GL_DEPTH_TEST);
-//    glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+    glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 
     // Load GLEW so it configures OpenGL
     if (glewInit() != GLEW_OK){
@@ -371,8 +370,8 @@ int main(){
     std::string path = "../src/include/assets/unicorn/unicorn.glb";
     Animation danceAnimation(path, &models.at("unicorn"));
     Animator animator(&danceAnimation);
+//    Animator animator = createAnimator(models);
 
-    // TODO: initiailizers for camera, lighting, global vars, other classes
     // Static world space positions of our cubes
     for (unsigned int n = 0; n < cubeCount; n++){
         cubePositions.emplace_back(
@@ -383,11 +382,11 @@ int main(){
     }
 
     // Generate grass objects for GPU instancing
-    unsigned int grassCount = 250;
+    uint8_t grassCount = 250;
     glm::mat4 *grassPositions;
     grassPositions = new glm::mat4[grassCount];
     for (unsigned int i = 0; i < grassCount; i++){
-        glm::mat4 model = glm::mat4(1.0f);
+        auto model = glm::mat4(1.0f);
         model = glm::rotate(model, glm::radians(randomFloat(1.0f, 270.0f)), glm::vec3(0.0f, 1.0f, 0.0f));
         model = glm::translate(model, glm::vec3(randomFloat(-plane.planeMaxWidth, plane.planeMaxWidth),
                                                 0.0f,
@@ -411,7 +410,6 @@ int main(){
     ImGui_ImplOpenGL3_Init("#version 410");
 
     // Our state
-    bool show_demo_window = false;
     auto imguiMainBackgroundColor = ImVec4(1.0f, 1.0f, 1.0f, 1.00f);
 
     initFrameBuffer(frameBufferObject, frameBufferSize, textureColorBuffer, renderBufferObject);
@@ -427,17 +425,17 @@ int main(){
     unsigned int buffer;
     glGenBuffers(1, &buffer);
     glBindBuffer(GL_ARRAY_BUFFER, buffer);
-    glBufferData(GL_ARRAY_BUFFER, grassCount * sizeof(glm::mat4), &grassPositions[0], GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, static_cast<long>(sizeof(glm::mat4)) * grassCount, &grassPositions[0], GL_STATIC_DRAW);
 
     // set transformation matrices as an instance vertex attribute (with divisor 1)
     // -----------------------------------------------------------------------------------------------------------------------------------
     for (unsigned int i = 0; i < models.at("grass").meshes.size(); i++)
     {
-        unsigned int VAO = models.at("grass").meshes[i].VAO;
-        glBindVertexArray(VAO);
+        unsigned int tempVAO = models.at("grass").meshes[i].VAO;
+        glBindVertexArray(tempVAO);
         // set attribute pointers for matrix (4 times vec4)
         glEnableVertexAttribArray(3);
-        glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)0);
+        glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)nullptr);
         glEnableVertexAttribArray(4);
         glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(sizeof(glm::vec4)));
         glEnableVertexAttribArray(5);
@@ -474,7 +472,9 @@ int main(){
         glm::mat4 lightSpaceMatrix;
         float nearPlane = -1.5;
         float farPlane = plane.planeMaxHeight;
-        lightProjection = glm::ortho(-plane.planeMaxWidth, plane.planeMaxWidth, -plane.planeMaxHeight, plane.planeMaxHeight, nearPlane, farPlane);
+        lightProjection = glm::ortho(-plane.planeMaxWidth, plane.planeMaxWidth,
+                                     -plane.planeMaxHeight, plane.planeMaxHeight,
+                                     nearPlane, farPlane);
         // eye, center, up
         lightView = glm::lookAt(light.position, models.at("unicorn").position, glm::vec3(0.0, 1.0, 0.0));
         lightSpaceMatrix = lightProjection * lightView;
@@ -482,30 +482,30 @@ int main(){
         shaders.at("shadowMappingDepth").use();
         shaders.at("shadowMappingDepth").setMat4("lightSpaceMatrix", lightSpaceMatrix);
 
-        glViewport(0, 0, shadowWidth, shadowHeight);
+        glViewport(0, 0, static_cast<int>(shadowWidth), static_cast<int>(shadowHeight));
         glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
         glClear(GL_DEPTH_BUFFER_BIT);
         glActiveTexture(GL_TEXTURE0);
         glCullFace(GL_FRONT);
-        renderDepth(camera, shaders, models, textures, currentFrame, depthMap, grassCount, animator);
+        renderDepth(shaders, models, textures, currentFrame, depthMap, grassCount, animator);
         glCullFace(GL_BACK);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
         // Reset viewport
-        glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
+        glViewport(0, 0, static_cast<int>(SCR_WIDTH), static_cast<int>(SCR_HEIGHT));
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // Activate shader when setting uniforms/drawing objects
-        for (const auto &shader: shaders){
-            shaders.at(shader.first).use();
-            shaders.at(shader.first).setVec3("lightPos", light.position);
-            shaders.at(shader.first).setVec3("viewPos", camera.position);
-            shaders.at(shader.first).setMat4("lightSpaceMatrix", lightSpaceMatrix);
-            shaders.at(shader.first).setInt("diffuseTexture", 0);
-            shaders.at(shader.first).setInt("shadowMap", 1);
-            shaders.at(shader.first).setFloat("amb", 0.8);
-            shaders.at(shader.first).setFloat("dif", 0.3);
-            shaders.at(shader.first).setFloat("spc", 0.0);
+        for (const auto &[key, value]: shaders){
+            shaders.at(key).use();
+            shaders.at(key).setVec3("lightPos", light.position);
+            shaders.at(key).setVec3("viewPos", camera.position);
+            shaders.at(key).setMat4("lightSpaceMatrix", lightSpaceMatrix);
+            shaders.at(key).setInt("diffuseTexture", 0);
+            shaders.at(key).setInt("shadowMap", 1);
+            shaders.at(key).setFloat("amb", 0.8f);
+            shaders.at(key).setFloat("dif", 0.3f);
+            shaders.at(key).setFloat("spc", 0.0f);
         }
 
         // Start the Dear ImGui frame
@@ -557,38 +557,37 @@ int main(){
         // OpenGL window
         static bool use_work_area = false;
         static ImGuiWindowFlags flags = ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoInputs;
-        const ImGuiViewport* viewport = ImGui::GetMainViewport();
+        ImGuiViewport const* viewport = ImGui::GetMainViewport();
         ImGui::SetNextWindowPos(use_work_area ? viewport->WorkPos : viewport->Pos);
         ImGui::SetNextWindowSize(use_work_area ? viewport->WorkSize : viewport->Size);
 
         ImGui::SetNextWindowPos(ImVec2(0, 40), ImGuiCond_Always);
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
-        ImGui::Begin("OpenGL", NULL, flags);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
+        ImGui::Begin("OpenGL", nullptr, flags);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
         ImGui::BeginChild("Render");
         ImGui::PopStyleVar();
         glWindowSize = ImGui::GetContentRegionAvail();
-        auto glWindowPosition = ImGui::GetWindowPos();
         frameBufferSize = glWindowSize;
 
         // Specify the viewport of OpenGL in the Window
-        glViewport(0, 0, glWindowSize.x, glWindowSize.y);
+        glViewport(0, 0, static_cast<int>(glWindowSize.x), static_cast<int>(glWindowSize.y));
 
         try {
             glEnable(GL_FRAMEBUFFER_SRGB);
             glBindTexture(GL_TEXTURE_2D, textureColorBuffer);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, frameBufferSize.x, frameBufferSize.y, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, static_cast<int>(frameBufferSize.x), static_cast<int>(frameBufferSize.y), 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
             glBindTexture(GL_TEXTURE_2D, 0);
             glBindRenderbuffer(GL_RENDERBUFFER, renderBufferObject);
-            glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, frameBufferSize.x, frameBufferSize.y);
+            glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, static_cast<int>(frameBufferSize.x), static_cast<int>(frameBufferSize.y));
             glBindRenderbuffer(GL_RENDERBUFFER, 0);
             glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, renderBufferObject);
             glClear(GL_FRAMEBUFFER);
             glBindFramebuffer(GL_FRAMEBUFFER, frameBufferObject);
             // ============================================================================================================================
 
-            render(camera, shaders, models, textures, currentFrame, depthMap, grassCount, animator);
+            render(shaders, models, textures, currentFrame, depthMap, grassCount, animator);
 
             // ============================================================================================================================
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -596,7 +595,7 @@ int main(){
             glDisable(GL_FRAMEBUFFER_SRGB);
 
         }
-        catch (std::exception &e){
+        catch (const std::exception &e){
             spdlog::error("ImGui::Image: {}", e.what());
         }
         ImGui::EndChild();
@@ -627,33 +626,32 @@ int main(){
         // testLighting window
         ImGui::SetNextWindowPos( ImVec2(470, 20), ImGuiCond_Once);
         flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings;
-//        ImGui::SetNextWindowSize(ImVec2(220, 320), ImGuiCond_Once);
         ImGui::Begin("Camera / Lights", nullptr);
 
         ImGui::SliderFloat("light.x", &light.x, -plane.planeMaxWidth - 10, plane.planeMaxWidth + 10);
         ImGui::SliderFloat("light.y", &light.y, -1, 300);
         ImGui::SliderFloat("light.z", &light.z, -plane.planeMaxHeight - 10, plane.planeMaxHeight + 10);
 
-        ImGui::SliderFloat("FOV", &camera.zoom, -10, plane.planeMaxHeight + 10);
+        ImGui::SliderFloat("zoom", &camera.zoom, -10, plane.planeMaxHeight + 10);
 
-        ImGui::SliderFloat("cameraPos.x", &camera.position.x, -plane.planeMaxWidth, plane.planeMaxWidth);
-        ImGui::SliderFloat("cameraPos.y", &camera.position.y, -1, 300);
-        ImGui::SliderFloat("cameraPos.z", &camera.position.z, -plane.planeMaxHeight, plane.planeMaxHeight);
+        ImGui::SliderFloat("camera.x", &camera.position.x, -plane.planeMaxWidth, plane.planeMaxWidth);
+        ImGui::SliderFloat("camera.y", &camera.position.y, -1, 300);
+        ImGui::SliderFloat("camera.z", &camera.position.z, -plane.planeMaxHeight, plane.planeMaxHeight);
 
         ImGui::Checkbox("Wireframe", &wireframe);
         ImGui::End();
 
         ImGui::SetNextWindowPos( ImVec2(230, 20), ImGuiCond_Once);
         ImGui::Begin("Unicorn", nullptr);
-        ImGui::ColorPicker4("Body", (float*)&unicornColorTest, ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_DisplayRGB, NULL);
-        ImGui::ColorPicker4("Mane", (float*)&unicornManeColorTest, ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_DisplayRGB, NULL);
-        ImGui::ColorPicker4("Tail", (float*)&unicornTailColorTest, ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_DisplayRGB, NULL);
+        ImGui::ColorPicker4("Body", (float*)&unicornColorTest, ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_DisplayRGB, nullptr);
+        ImGui::ColorPicker4("Mane", (float*)&unicornManeColorTest, ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_DisplayRGB, nullptr);
+        ImGui::ColorPicker4("Tail", (float*)&unicornTailColorTest, ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_DisplayRGB, nullptr);
 
         ImGui::End();
 
         // ImGui::ShowDemoWindow(&show_demo_window);
 
-        processInput(window, camera, models);
+        processInput(window, models);
         playerJump(currentFrame, models);
 
         // Rendering

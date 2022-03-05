@@ -121,6 +121,31 @@ auto loadModels(){
     return models;
 }
 
+auto initModels(auto &models, auto &planeMaxWidth, auto &planeMaxHeight){
+    // Init models
+    stbi_set_flip_vertically_on_load(false);
+    models.at("unicorn").position = glm::vec3(0.0f, 0.0f, planeMaxHeight);
+    models.at("unicorn").rotationDegrees = 180.0f;
+    models.at("unicornMane").position = glm::vec3(0.0f, 0.0f, planeMaxHeight);
+    models.at("unicornMane").rotationDegrees = 180.0f;
+    models.at("unicornTail").position = glm::vec3(0.0f, 0.0f, planeMaxHeight);
+    models.at("unicornTail").rotationDegrees = 180.0f;
+
+    models.at("wabbit").position = glm::vec3(-planeMaxWidth, 0.0f, 0.0f);
+    models.at("wabbit").movementOffset = 0.04f;
+
+    models.at("frog").position = glm::vec3(planeMaxWidth, 0.0f, 0.0f);
+    models.at("frog").movementOffset = 0.03f;
+}
+
+Animator createAnimator(auto &models){
+    std::string path = "../src/include/assets/unicorn/unicorn.glb";
+    Animation danceAnimation(path, &models.at("unicorn"));
+    Animator animator(&danceAnimation);
+
+    return animator;
+}
+
 auto loadTextures(){
     // Load and create a texture
     std::vector<std::string> textureNames = {
@@ -159,29 +184,4 @@ auto loadShaders(){
     }
 
     return shaders;
-}
-
-auto initModels(auto &models, auto &planeMaxWidth, auto &planeMaxHeight){
-    // Init models
-    stbi_set_flip_vertically_on_load(false);
-    models.at("unicorn").position = glm::vec3(0.0f, 0.0f, planeMaxHeight);
-    models.at("unicorn").rotationDegrees = 180.0f;
-    models.at("unicornMane").position = glm::vec3(0.0f, 0.0f, planeMaxHeight);
-    models.at("unicornMane").rotationDegrees = 180.0f;
-    models.at("unicornTail").position = glm::vec3(0.0f, 0.0f, planeMaxHeight);
-    models.at("unicornTail").rotationDegrees = 180.0f;
-
-    models.at("wabbit").position = glm::vec3(-planeMaxWidth, 0.0f, 0.0f);
-    models.at("wabbit").movementOffset = 0.04f;
-
-    models.at("frog").position = glm::vec3(planeMaxWidth, 0.0f, 0.0f);
-    models.at("frog").movementOffset = 0.03f;
-}
-
-Animator createAnimator(auto &models){
-    std::string path = "../src/include/assets/unicorn/unicorn.glb";
-    Animation danceAnimation(path, *models.at("unicorn"));
-    Animator animator(&danceAnimation);
-
-    return animator;
 }

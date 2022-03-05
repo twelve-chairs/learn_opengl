@@ -13,7 +13,7 @@ public:
     float floorMin = 0.0f;
 
     explicit Platform(auto newPlaneMaxWidth, auto newPlaneMaxHeight, auto newFloorMin){
-        planeMaxWidth = newPlaneMaxWidth;
+        this->planeMaxWidth = newPlaneMaxWidth;
         this->planeMaxHeight = newPlaneMaxHeight;
         this->floorMin = newFloorMin;
     }

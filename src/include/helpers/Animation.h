@@ -28,7 +28,7 @@ public:
 
     Animation() = default;
 
-    Animation(const std::string& animationPath, ModelAnimation* model){
+    Animation(const std::string &animationPath, ModelAnimation *model){
         Assimp::Importer importer;
         const aiScene* scene = importer.ReadFile(animationPath, aiProcess_Triangulate);
         assert(scene && scene->mRootNode);
