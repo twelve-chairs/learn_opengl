@@ -53,6 +53,9 @@ jobs:
     - name: Packages
       shell: bash
       run: |
+        wget -qO - http://packages.lunarg.com/lunarg-signing-key-pub.asc | sudo apt-key add -
+        sudo wget -qO /etc/apt/sources.list.d/lunarg-vulkan-focal.list http://packages.lunarg.com/vulkan/lunarg-vulkan-focal.list
+
         sudo apt-get update
         sudo apt-get install -y build-essential git pip cmake curl libgl-dev libglu1-mesa-dev libegl-dev
         pip install conan
