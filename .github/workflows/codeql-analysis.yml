@@ -57,7 +57,7 @@ jobs:
         sudo wget -qO /etc/apt/sources.list.d/lunarg-vulkan-focal.list http://packages.lunarg.com/vulkan/lunarg-vulkan-focal.list
 
         sudo apt-get update
-        sudo apt-get install -y build-essential git pip cmake curl
+        sudo apt-get install -y build-essential git pip cmake curl libgl1-mesa-glx
         pip install conan
         
     # Autobuild attempts to build any compiled languages  (C/C++, C#, or Java).
