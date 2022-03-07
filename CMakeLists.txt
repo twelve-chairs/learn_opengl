@@ -33,7 +33,6 @@ conan_cmake_configure(REQUIRES cmake/3.21.3
         glm/0.9.9.8
         stb/cci.20210910
         assimp/5.1.0
-        openal/1.21.1
         freetype/2.11.1
         spdlog/1.9.2
         GENERATORS cmake cmake_paths cmake_find_package)
@@ -50,7 +49,6 @@ find_package(imgui REQUIRED)
 find_package(glm REQUIRED)
 find_package(stb REQUIRED)
 find_package(assimp REQUIRED)
-find_package(OpenAL REQUIRED)
 find_package(Freetype REQUIRED)
 find_package(spdlog REQUIRED)
 
@@ -68,6 +66,5 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
         glm::glm
         stb::stb
         assimp::assimp
-        OpenAL::OpenAL
         Freetype::Freetype
         spdlog::spdlog)
