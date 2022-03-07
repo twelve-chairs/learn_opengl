@@ -43,15 +43,6 @@ public:
         this->pitch = newPitch;
         this->updateCameraVectors();
     }
-    // constructor with scalar values
-    Camera(float posX, float posY, float posZ, float upX, float upY, float upZ, float yaw, float pitch) : front(glm::vec3(0.0f, 0.0f, -1.0f)), speed(SPEED), sensitivity(SENSITIVITY), zoom(ZOOM)
-    {
-        position = glm::vec3(posX, posY, posZ);
-        worldUp = glm::vec3(upX, upY, upZ);
-        yaw = yaw;
-        pitch = pitch;
-        updateCameraVectors();
-    }
 
     // returns the view matrix calculated using Euler Angles and the LookAt Matrix
     [[nodiscard]] glm::mat4 GetViewMatrix() const{

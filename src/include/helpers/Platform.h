@@ -19,9 +19,7 @@ public:
     }
 
 private:
-    void setupObjects(){
-
-    }
+    void setupObjects() const{}
 };
 
 

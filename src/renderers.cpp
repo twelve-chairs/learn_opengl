@@ -212,13 +212,13 @@ void renderMysteryCubes(Shader &shader, auto &mesh, auto &count, auto &positions
 void renderSkyDome(Shader &shader, auto &mesh, auto &texture, auto &currentFrame, auto planeMaxHeight) {
     shader.use();
     shader.setInt("shadowMap", 0);
-    shader.setFloat("amb", 0.5);
+    shader.setFloat("amb", 0.8);
     shader.setFloat("dif", 0.0);
     glBindTexture(GL_TEXTURE_2D, texture);
-//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glm::mat4 model = glm::mat4(1.0f);
     model = glm::rotate(model, currentFrame * 0.01f, glm::vec3(0.0f, 1.0f, 0.0f));
     model = glm::scale(model, glm::vec3(planeMaxHeight * 10.0f,

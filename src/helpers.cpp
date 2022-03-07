@@ -138,14 +138,6 @@ auto initModels(auto &models, auto &planeMaxWidth, auto &planeMaxHeight){
     models.at("frog").movementOffset = 0.03f;
 }
 
-Animator createAnimator(auto &models){
-    std::string path = "../src/include/assets/unicorn/unicorn.glb";
-    Animation danceAnimation(path, &models.at("unicorn"));
-    Animator animator(&danceAnimation);
-
-    return animator;
-}
-
 auto loadTextures(){
     // Load and create a texture
     std::vector<std::string> textureNames = {

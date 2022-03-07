@@ -12,15 +12,13 @@
 class Animator
 {
 public:
-    explicit Animator(Animation *animation)
+    explicit Animator(Animation *animation): m_CurrentAnimation(animation), m_CurrentTime(0.0)
     {
-        m_CurrentTime = 0.0;
-        m_CurrentAnimation = animation;
-
         m_FinalBoneMatrices.reserve(100);
 
-        for (int i = 0; i < 100; i++)
-            m_FinalBoneMatrices.emplace_back(glm::mat4(1.0f));
+        for (int i = 0; i < 100; i++) {
+            m_FinalBoneMatrices.emplace_back();
+        }
     }
 
     void UpdateAnimation(float dt)
@@ -40,7 +38,7 @@ public:
         m_CurrentTime = 0.0f;
     }
 
-    void CalculateBoneTransform(const AssimpNodeData *node, glm::mat4 parentTransform)
+    void CalculateBoneTransform(const AssimpNodeData *node, glm::mat4 const &parentTransform)
     {
         std::string nodeName = node->name;
         glm::mat4 nodeTransform = node->transformation;
@@ -76,6 +74,6 @@ private:
     std::vector<glm::mat4> m_FinalBoneMatrices;
     Animation* m_CurrentAnimation;
     float m_CurrentTime;
-    float m_DeltaTime{};
+    [[maybe_unused]] float m_DeltaTime{};
 
 };

@@ -255,13 +255,11 @@ void scrollCallback([[maybe_unused]] GLFWwindow *window, [[maybe_unused]] double
     camera.ProcessMouseScroll(static_cast<float>(yoffset));
 }
 
-void renderDepth(auto &shaders, auto &models, auto &textures, auto &currentFrame, auto &depthMap, auto &grassCount, auto &animator){
+void renderDepth(auto &shaders, auto &models, auto &textures, auto &currentFrame, auto &depthMap, [[maybe_unused]] auto &grassCount, auto &animator){
     // Pass projection matrix to shader (FOV, aspect, near, far)
     glm::mat4 projection = glm::perspective(glm::radians(camera.zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 10000.0f);
     // Camera/view transformation
     glm::mat4 view = glm::lookAt(camera.position, camera.position + camera.front, camera.up);
-    // Model. Make sure to initialize matrix to identity matrix first
-    glm::mat4 model = glm::mat4(1.0f);
 
     // view/projection transformations
     shaders.at("shadowMappingDepth").use();
@@ -281,7 +279,7 @@ void renderDepth(auto &shaders, auto &models, auto &textures, auto &currentFrame
     glActiveTexture(GL_TEXTURE0);
 }
 
-void render(auto &shaders, auto &models, auto &textures, auto &currentFrame, auto &depthMap, auto &grassCount, auto &animator){
+void render(auto &shaders, auto &models, auto &textures, auto &currentFrame, auto &depthMap, [[maybe_unused]] auto &grassCount, auto &animator){
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, depthMap);
@@ -290,8 +288,6 @@ void render(auto &shaders, auto &models, auto &textures, auto &currentFrame, aut
     glm::mat4 projection = glm::perspective(glm::radians(camera.zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 10000.0f);
     // Camera/view transformation
     glm::mat4 view = glm::lookAt(camera.position, camera.position + camera.front, camera.up);
-    // Model. Make sure to initialize matrix to identity matrix first
-    auto model = glm::mat4(1.0f);
 
     // view/projection transformations
     for (const auto &each : shaders){
@@ -370,7 +366,6 @@ int main(){
     std::string path = "../src/include/assets/unicorn/unicorn.glb";
     Animation danceAnimation(path, &models.at("unicorn"));
     Animator animator(&danceAnimation);
-//    Animator animator = createAnimator(models);
 
     // Static world space positions of our cubes
     for (unsigned int n = 0; n < cubeCount; n++){
@@ -382,9 +377,8 @@ int main(){
     }
 
     // Generate grass objects for GPU instancing
-    uint8_t grassCount = 250;
-    glm::mat4 *grassPositions;
-    grassPositions = new glm::mat4[grassCount];
+    const uint8_t grassCount = 250;
+    auto grassPositions = std::vector(grassCount, glm::mat4(0.0f));
     for (unsigned int i = 0; i < grassCount; i++){
         auto model = glm::mat4(1.0f);
         model = glm::rotate(model, glm::radians(randomFloat(1.0f, 270.0f)), glm::vec3(0.0f, 1.0f, 0.0f));
@@ -392,14 +386,13 @@ int main(){
                                                 0.0f,
                                                 randomFloat(-plane.planeMaxHeight, plane.planeMaxHeight))
         );
-        grassPositions[i] = model;
+        grassPositions.at(i) = model;
     }
 
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
-//    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
     io.ConfigWindowsMoveFromTitleBarOnly = true;
 
     // Setup Dear ImGui style
