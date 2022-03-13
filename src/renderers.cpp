@@ -1,3 +1,15 @@
+#include "include/helpers/ModelAnimation.h"
+#include "include/helpers/Shader.h"
+#include <cstdlib>
+#include <random>
+#include <GL/glew.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/random.hpp>
+#include <glm/gtx/vector_angle.hpp>
+#include <map>
+#include <spdlog/spdlog.h>
+
 void renderGrass(Shader &shader, auto &grassModel, auto &grassCount, auto &light){
     shader.use();
     shader.setVec3("lightPos", light.position);

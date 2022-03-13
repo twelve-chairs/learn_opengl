@@ -1,18 +1,29 @@
-int randomInteger(int to, int from){
+#ifndef HELPERS_H
+#define HELPERS_H
+
+#include <random>
+#include <GL/glew.h>
+#include <glm/glm.hpp>
+#include <map>
+#include <spdlog/spdlog.h>
+#include "include/helpers/ModelAnimation.h"
+
+
+static int randomInteger(int to, int from){
     std::random_device randomizerSeed;
     std::default_random_engine randomEngine(randomizerSeed());
     std::uniform_int_distribution<int> randomRange(from, to);
     return randomRange(randomEngine);
 }
 
-float randomFloat(float to, float from){
+static float randomFloat(float to, float from){
     std::random_device randomizerSeed;
     std::default_random_engine randomEngine(randomizerSeed());
     std::uniform_real_distribution<float> distribution(from, to);
     return distribution(randomEngine);
 }
 
-void createTexture(GLuint &texture, const std::string &path, bool alpha){
+static void createTexture(GLuint &texture, const std::string &path, bool alpha){
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture);
     // set the texture wrapping parameters
@@ -40,7 +51,7 @@ void createTexture(GLuint &texture, const std::string &path, bool alpha){
     stbi_image_free(data);
 }
 
-GLuint initFrameBuffer(auto &frameBufferObject, auto &frameBufferSize, auto &textureColorBuffer, auto &renderBufferObject){
+static GLuint initFrameBuffer(auto &frameBufferObject, auto &frameBufferSize, auto &textureColorBuffer, auto &renderBufferObject){
     glGenFramebuffers(1, &frameBufferObject);
     glBindFramebuffer(GL_FRAMEBUFFER, frameBufferObject);
     // generate texture
@@ -67,7 +78,7 @@ GLuint initFrameBuffer(auto &frameBufferObject, auto &frameBufferSize, auto &tex
     return frameBufferObject;
 }
 
-std::vector<unsigned int> generateDepthMap(){
+static std::vector<unsigned int> generateDepthMap(){
     // configure depth map FBO
     const unsigned int SHADOW_WIDTH = 4096;
     const unsigned int SHADOW_HEIGHT = 4096;
@@ -95,7 +106,7 @@ std::vector<unsigned int> generateDepthMap(){
     return result;
 }
 
-auto loadModels(){
+static auto loadModels(){
     std::vector<std::string> modelNames = {
             "unicorn/unicorn.glb",
             "unicorn/unicornMane.glb",
@@ -121,7 +132,7 @@ auto loadModels(){
     return models;
 }
 
-auto initModels(auto &models, auto &planeMaxWidth, auto &planeMaxHeight){
+static auto initModels(auto &models, auto &planeMaxWidth, auto &planeMaxHeight){
     // Init models
     stbi_set_flip_vertically_on_load(false);
     models.at("unicorn").position = glm::vec3(0.0f, 0.0f, planeMaxHeight);
@@ -138,7 +149,7 @@ auto initModels(auto &models, auto &planeMaxWidth, auto &planeMaxHeight){
     models.at("frog").movementOffset = 0.03f;
 }
 
-auto loadTextures(){
+static auto loadTextures(){
     // Load and create a texture
     std::vector<std::string> textureNames = {
             "clouds.jpeg",
@@ -157,7 +168,7 @@ auto loadTextures(){
     return textures;
 }
 
-auto loadShaders(){
+static auto loadShaders(){
     // Build and compile our shader programs
     std::vector<std::string> shaderNames = {
             "default",
@@ -177,3 +188,5 @@ auto loadShaders(){
 
     return shaders;
 }
+
+#endif

@@ -16,6 +16,7 @@
 #include <string>
 #include <cstdlib>
 #include <random>
+#include <stdlib.h>
 
 #include <GL/glew.h>
 #include "imgui.h"
@@ -26,19 +27,18 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/random.hpp>
 #include <glm/gtx/vector_angle.hpp>
-#include <stb_image.h>
 #include <spdlog/spdlog.h>
 
 #include "include/helpers/Camera.h"
 #include "include/helpers/Light.h"
 #include "include/helpers/Animator.h"
-#include "include/helpers/Model.h"
-#include "include/helpers/ModelAnimation.h"
-#include "include/helpers/Shader.h"
+//#include "include/helpers/Model.h"
+//#include "include/helpers/ModelAnimation.h"
+//#include "include/helpers/Shader.h"
 #include "include/helpers/Platform.h"
 
-#include "helpers.cpp"
 #include "renderers.cpp"
+#include "helpers.cpp"
 
 
 // Window settings
@@ -75,9 +75,9 @@ float jumpStart = 0.0f;
 // Testing
 int testInt = 0;
 float testFloat = 0.0f;
-glm::vec3 unicornColorTest = glm::vec3(0.163, 0.540, 0.571);
-glm::vec3 unicornManeColorTest = glm::vec3(0.765, 0.849, 0.086);
-glm::vec3 unicornTailColorTest = glm::vec3(0.765, 0.450, 0.450);
+auto unicornColorTest = glm::vec3(0.163, 0.540, 0.571);
+auto unicornManeColorTest = glm::vec3(0.765, 0.849, 0.086);
+auto unicornTailColorTest = glm::vec3(0.765, 0.450, 0.450);
 
 
 void playerJump(const float &currentFrame, auto &models){

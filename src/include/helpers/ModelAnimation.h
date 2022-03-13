@@ -11,6 +11,7 @@
 
 #include "Mesh.h"
 #include "Shader.h"
+#include "Bone.h"
 
 #include <string>
 #include <fstream>
@@ -18,6 +19,7 @@
 #include <iostream>
 #include <map>
 #include <vector>
+#include <stb_image.h>
 
 
 struct BoneInfo
