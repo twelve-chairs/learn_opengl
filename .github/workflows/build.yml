@@ -38,7 +38,12 @@ jobs:
           echo "$HOME/.sonar/build-wrapper-linux-x86" >> $GITHUB_PATH
       - name: Run build-wrapper
         run: |
-          build-wrapper-linux-x86-64 --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }}<insert_your_clean_build_command>
+          export CONAN_SYSREQUIRES_MODE=enabled
+          sudo apt-get update
+          sudo apt-get install -y build-essential git pip cmake curl libgl1-mesa-glx libgl-dev
+          pip install conan
+        
+          build-wrapper-linux-x86-64 --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} cmake -DCMAKE_BUILD_TYPE=Debug .
       - name: Run sonar-scanner
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
