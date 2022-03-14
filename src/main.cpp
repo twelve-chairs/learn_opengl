@@ -26,15 +26,11 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/random.hpp>
-#include <glm/gtx/vector_angle.hpp>
 #include <spdlog/spdlog.h>
 
 #include "include/helpers/Camera.h"
 #include "include/helpers/Light.h"
 #include "include/helpers/Animator.h"
-//#include "include/helpers/Model.h"
-//#include "include/helpers/ModelAnimation.h"
-//#include "include/helpers/Shader.h"
 #include "include/helpers/Platform.h"
 
 #include "renderers.cpp"
