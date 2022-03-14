@@ -26,6 +26,7 @@ if(NOT EXISTS "${CMAKE_BINARY_DIR}/conan.cmake")
 endif()
 
 include(${CMAKE_BINARY_DIR}/conan.cmake)
+set(CONAN_SYSREQUIRES_MODE "enabled")
 conan_cmake_configure(REQUIRES cmake/3.21.3
         glfw/3.3.6
         glew/2.2.0
