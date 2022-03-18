@@ -27,10 +27,10 @@ endif()
 
 include(${CMAKE_BINARY_DIR}/conan.cmake)
 set(CONAN_SYSREQUIRES_MODE "enabled")
-conan_cmake_configure(REQUIRES cmake/3.21.3
+conan_cmake_configure(REQUIRES cmake/3.22.3
         glfw/3.3.6
         glew/2.2.0
-        imgui/1.86
+        imgui/1.87
         glm/0.9.9.8
         stb/cci.20210910
         assimp/5.1.0
