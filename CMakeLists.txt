@@ -41,7 +41,7 @@ conan_cmake_autodetect(settings)
 conan_cmake_install(PATH_OR_REFERENCE .
         BUILD missing
         REMOTE conancenter
-        SETTINGS ${settings})
+        SETTINGS ${settings} compiler.version=13.0)
 ########################################################################################################################
 
 find_package(glfw3 REQUIRED)
