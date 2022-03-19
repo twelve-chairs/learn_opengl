@@ -10,8 +10,9 @@ cmake_minimum_required(VERSION 3.20)
 set(PROJECT_NAME "twelvechairs")
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_BUILD_TYPE MinSizeRel)
 
-project(${PROJECT_NAME} LANGUAGES C CXX)
+project(${PROJECT_NAME} CXX)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR})
 list(APPEND CMAKE_PREFIX_PATH ${CMAKE_BINARY_DIR})
@@ -27,7 +28,7 @@ endif()
 
 include(${CMAKE_BINARY_DIR}/conan.cmake)
 set(CONAN_SYSREQUIRES_MODE "enabled")
-conan_cmake_configure(REQUIRES cmake/3.22.3
+conan_cmake_configure(REQUIRES
         glfw/3.3.6
         glew/2.2.0
         imgui/1.87
