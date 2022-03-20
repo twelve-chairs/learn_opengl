@@ -40,8 +40,10 @@ jobs:
         run: |
           export CONAN_SYSREQUIRES_MODE=enabled
           sudo apt-get update
-          sudo snap install cmake --classic
           sudo apt-get install -y build-essential gcc-9 git pip curl libgl1-mesa-glx libgl-dev
+          sudo apt remove --purge cmake -y
+          hash -r
+          sudo snap install cmake --classic
           pip install conan
           cmake -DCMAKE_BUILD_TYPE=MinSizeRel -G "CodeBlocks - Unix Makefiles" .
           build-wrapper-linux-x86-64 --out-dir bw-outputs cmake --build . --clean-first --target twelvechairs -- -j 2
