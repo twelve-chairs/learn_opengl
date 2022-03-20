@@ -26,7 +26,7 @@ if(NOT EXISTS "${CMAKE_BINARY_DIR}/conan.cmake")
             TLS_VERIFY ON)
 endif()
 
-add_definitions("-std=c++17")
+#add_definitions("-std=c++17")
 include(${CMAKE_BINARY_DIR}/conan.cmake)
 set(CONAN_SYSREQUIRES_MODE "enabled")
 conan_cmake_configure(REQUIRES
