@@ -40,9 +40,7 @@ jobs:
         run: |
           export CONAN_SYSREQUIRES_MODE=enabled
           sudo apt-get update
-          sudo apt-get install -y build-essential gcc-10 git pip curl libgl1-mesa-glx libgl-dev
-          sudo apt remove --purge cmake -y
-          hash -r
+          sudo apt-get install -y build-essential git pip curl libgl1-mesa-glx libgl-dev
           sudo snap install cmake --classic
           pip install conan
           cmake --version
