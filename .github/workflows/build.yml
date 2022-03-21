@@ -45,6 +45,9 @@ jobs:
           hash -r
           sudo snap install cmake --classic
           pip install conan
+          cmake --version
+          conan --version
+          gcc --version
           cmake -DCMAKE_BUILD_TYPE=MinSizeRel -G "CodeBlocks - Unix Makefiles" .
           build-wrapper-linux-x86-64 --out-dir bw-outputs cmake --build . --clean-first --target twelvechairs -- -j 2
 #          build-wrapper-linux-x86-64 --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} cmake -DCMAKE_BUILD_TYPE=Debug  .
