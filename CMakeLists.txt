@@ -42,7 +42,7 @@ conan_cmake_autodetect(settings)
 conan_cmake_install(PATH_OR_REFERENCE .
         BUILD missing
         REMOTE conancenter
-        SETTINGS ${settings} compiler.libcxx=libstdc++17)
+        SETTINGS ${settings})
 ########################################################################################################################
 
 find_package(glfw3 REQUIRED)
