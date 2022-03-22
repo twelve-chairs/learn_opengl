@@ -43,6 +43,7 @@ jobs:
 #          build-wrapper-linux-x86-64 --out-dir bw-outputs cmake --build . --target twelvechairs -- -j 2
       - name: Legacy Sonar
         run: |
+          export CONAN_SYSREQUIRES_MODE=enabled
           curl -L -O https://sonarcloud.io/static/cpp/build-wrapper-linux-x86.zip
           unzip -q build-wrapper-linux-x86.zip
           cmake -DCMAKE_BUILD_TYPE=MinSizeRel -G "CodeBlocks - Unix Makefiles" .
