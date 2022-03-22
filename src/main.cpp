@@ -12,11 +12,6 @@
 
 #include <vector>
 #include <map>
-#include <filesystem>
-#include <string>
-#include <cstdlib>
-#include <random>
-#include <stdlib.h>
 
 #include <GL/glew.h>
 #include "imgui.h"
