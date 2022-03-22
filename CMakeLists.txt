@@ -12,7 +12,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_BUILD_TYPE MinSizeRel)
 
-project(${PROJECT_NAME} C CXX)
+project(${PROJECT_NAME} CXX)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR})
 list(APPEND CMAKE_PREFIX_PATH ${CMAKE_BINARY_DIR})
@@ -25,7 +25,7 @@ if(NOT EXISTS "${CMAKE_BINARY_DIR}/conan.cmake")
             EXPECTED_HASH SHA256=396e16d0f5eabdc6a14afddbcfff62a54a7ee75c6da23f32f7a31bc85db23484
             TLS_VERIFY ON)
 endif()
-add_definitions("-std=c++17")
+
 include(${CMAKE_BINARY_DIR}/conan.cmake)
 set(CONAN_SYSREQUIRES_MODE "enabled")
 conan_cmake_configure(REQUIRES
