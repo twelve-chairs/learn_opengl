@@ -2,6 +2,8 @@
 #define HELPERS_H
 
 #include <random>
+#include <cstdlib>
+#include <filesystem>
 #include <GL/glew.h>
 #include <glm/glm.hpp>
 #include <map>
