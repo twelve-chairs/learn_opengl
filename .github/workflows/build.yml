@@ -5,18 +5,32 @@ on:
       - master
   pull_request:
     types: [opened, synchronize, reopened]
+  schedule:
+    - cron: '41 7 * * 5'
+
 jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        language: [ 'cpp' ]
     steps:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+
       - name: Set up JDK 11
         uses: actions/setup-java@v1
         with:
           java-version: 11
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v1
+        with:
+          languages: cpp
+
       - name: Build dependencies
         run: |
           export CONAN_SYSREQUIRES_MODE=enabled
@@ -25,6 +39,7 @@ jobs:
           pip install conan
           conan profile new default --detect
           conan profile update settings.compiler.libcxx=libstdc++11 default
+
       - name: Run build-wrapper
         run: |
           export CONAN_SYSREQUIRES_MODE=enabled
@@ -32,6 +47,7 @@ jobs:
           unzip -q build-wrapper-linux-x86.zip
           cmake -DCMAKE_BUILD_TYPE=MinSizeRel -G "CodeBlocks - Unix Makefiles" .
           build-wrapper-linux-x86/build-wrapper-linux-x86-64 --out-dir bw-outputs cmake --build . --target learn_opengl --clean-first -- -j 4
+
       - name: Run sonar-scanner
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -40,3 +56,6 @@ jobs:
           curl -L -O https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.7.0.2747-linux.zip
           unzip sonar-scanner-cli-4.7.0.2747-linux.zip
           sonar-scanner-4.7.0.2747-linux/bin/sonar-scanner --define sonar.host.url="https://sonarcloud.io" --define sonar.cfamily.build-wrapper-output="bw-outputs" --define sonar.sources="src"
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v1
