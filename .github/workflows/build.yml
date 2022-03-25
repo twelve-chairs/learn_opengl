@@ -8,11 +8,7 @@ on:
 jobs:
   build:
     name: Build
-    runs-on: fedora-latest
-    env:
-      SONAR_SCANNER_VERSION: 4.7.0.2747
-      SONAR_SERVER_URL: "https://sonarcloud.io"
-      BUILD_WRAPPER_OUT_DIR: bw-outputs # Directory where build-wrapper output will be placed
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
         with:
@@ -24,9 +20,8 @@ jobs:
       - name: Run build-wrapper
         run: |
           export CONAN_SYSREQUIRES_MODE=enabled
-          dnf groupinstall "Development Tools" -y
-          sudo dnf update -y
-          sudo dnf install -y gcc-c++ cmake pip mesa-libGL-devel mesa-libGLU-devel
+          sudo apt-get update -y
+          sudo apt-get install -y build-essential git pip cmake curl libgl-dev libglu1-mesa-dev libegl-dev
           pip install conan
           conan profile new default --detect
           conan profile update settings.compiler.libcxx=libstdc++11 default
@@ -36,7 +31,7 @@ jobs:
           curl -L -O https://sonarcloud.io/static/cpp/build-wrapper-linux-x86.zip
           unzip -q build-wrapper-linux-x86.zip
           cmake -DCMAKE_BUILD_TYPE=MinSizeRel -G "CodeBlocks - Unix Makefiles" .
-          build-wrapper-linux-x86/build-wrapper-linux-x86-64 --out-dir bw-outputs cmake --build . --target learn_opengl --clean-first -- -j 2
+          build-wrapper-linux-x86/build-wrapper-linux-x86-64 --out-dir bw-outputs cmake --build . --target learn_opengl --clean-first -- -j 4
       - name: Run sonar-scanner
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
