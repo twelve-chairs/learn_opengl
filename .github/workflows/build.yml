@@ -17,7 +17,7 @@ jobs:
         uses: actions/setup-java@v1
         with:
           java-version: 11
-      - name: Run build-wrapper
+      - name: Build dependencies
         run: |
           export CONAN_SYSREQUIRES_MODE=enabled
           sudo apt-get update -y
@@ -25,7 +25,7 @@ jobs:
           pip install conan
           conan profile new default --detect
           conan profile update settings.compiler.libcxx=libstdc++11 default
-      - name: Legacy Sonar
+      - name: Run build-wrapper
         run: |
           export CONAN_SYSREQUIRES_MODE=enabled
           curl -L -O https://sonarcloud.io/static/cpp/build-wrapper-linux-x86.zip

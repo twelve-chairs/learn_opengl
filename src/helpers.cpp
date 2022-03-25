@@ -18,7 +18,7 @@
     return randomRange(randomEngine);
 }
 
-static float randomFloat(float to, float from){
+[[maybe_unused]] static float randomFloat(float to, float from){
     std::random_device randomizerSeed;
     std::default_random_engine randomEngine(randomizerSeed());
     std::uniform_real_distribution<float> distribution(from, to);
@@ -80,7 +80,7 @@ static GLuint initFrameBuffer(auto &frameBufferObject, auto &frameBufferSize, au
     return frameBufferObject;
 }
 
-static std::vector<unsigned int> generateDepthMap(){
+[[maybe_unused]] static std::vector<unsigned int> generateDepthMap(){
     // configure depth map FBO
     const unsigned int SHADOW_WIDTH = 4096;
     const unsigned int SHADOW_HEIGHT = 4096;
@@ -90,7 +90,7 @@ static std::vector<unsigned int> generateDepthMap(){
     unsigned int depthMap;
     glGenTextures(1, &depthMap);
     glBindTexture(GL_TEXTURE_2D, depthMap);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
@@ -108,7 +108,7 @@ static std::vector<unsigned int> generateDepthMap(){
     return result;
 }
 
-static auto loadModels(){
+[[maybe_unused]] static auto loadModels(){
     std::vector<std::string> modelNames = {
             "unicorn/unicorn.glb",
             "unicorn/unicornMane.glb",
@@ -134,7 +134,7 @@ static auto loadModels(){
     return models;
 }
 
-static auto initModels(auto &models, auto &planeMaxWidth, auto &planeMaxHeight){
+[[maybe_unused]] static auto initModels(auto &models, auto &planeMaxWidth, auto &planeMaxHeight){
     // Init models
     stbi_set_flip_vertically_on_load(false);
     models.at("unicorn").position = glm::vec3(0.0f, 0.0f, planeMaxHeight);
@@ -151,7 +151,7 @@ static auto initModels(auto &models, auto &planeMaxWidth, auto &planeMaxHeight){
     models.at("frog").movementOffset = 0.03f;
 }
 
-static auto loadTextures(){
+[[maybe_unused]] static auto loadTextures(){
     // Load and create a texture
     std::vector<std::string> textureNames = {
             "clouds.jpeg",
@@ -170,7 +170,7 @@ static auto loadTextures(){
     return textures;
 }
 
-static auto loadShaders(){
+[[maybe_unused]] static auto loadShaders(){
     // Build and compile our shader programs
     std::vector<std::string> shaderNames = {
             "default",
