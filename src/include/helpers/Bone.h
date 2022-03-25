@@ -125,6 +125,7 @@ public:
                 return index;
         }
         assert(0);
+        return -1;
     }
 
     int GetRotationIndex(float animationTime)
@@ -135,6 +136,7 @@ public:
                 return index;
         }
         assert(0);
+        return -1;
     }
 
     int GetScaleIndex(float animationTime)
@@ -145,6 +147,7 @@ public:
                 return index;
         }
         assert(0);
+        return -1;
     }
 
 
