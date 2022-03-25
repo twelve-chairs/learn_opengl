@@ -74,7 +74,8 @@ jobs:
       shell: bash
       run: |
         export CONAN_SYSREQUIRES_MODE=enabled
-        cmake -DCMAKE_BUILD_TYPE=Debug . 
+        cmake -DCMAKE_BUILD_TYPE=MinSizeRel -G "CodeBlocks - Unix Makefiles" .
+        cmake --build . --target learn_opengl --clean-first -- -j 4
       
     # ℹ️ Command-line programs to run using the OS shell.
     # 📚 https://git.io/JvXDl

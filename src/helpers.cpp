@@ -11,7 +11,7 @@
 #include "include/helpers/ModelAnimation.h"
 
 
-static int randomInteger(int to, int from){
+[[maybe_unused]] static int randomInteger(int to, int from){
     std::random_device randomizerSeed;
     std::default_random_engine randomEngine(randomizerSeed());
     std::uniform_int_distribution<int> randomRange(from, to);
