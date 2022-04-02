@@ -34,7 +34,7 @@ conan_cmake_configure(REQUIRES
         imgui/1.86
         glm/0.9.9.8
         stb/cci.20210910
-        assimp/5.1.0
+        assimp/5.2.2
         freetype/2.11.1
         spdlog/1.9.2
         GENERATORS cmake cmake_paths cmake_find_package)
