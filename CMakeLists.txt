@@ -66,5 +66,4 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
         glm::glm
         stb::stb
         assimp::assimp
-        Freetype::Freetype
         spdlog::spdlog)
