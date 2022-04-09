@@ -46,7 +46,7 @@ const int cubeCount = 10;
 std::vector<glm::vec3> cubePositions;
 
 // Plane
-const auto plane = Platform(randomFloat(50.0f, 400.0f), randomFloat(50.0f, 400.0f), 0.0f);
+const auto plane = Platform(randomFloat(30.0f, 50.0f), randomFloat(50.0f, 100.0f), 0.0f);
 
 // Camera
 auto camera = Camera();
@@ -99,6 +99,8 @@ void processInput(GLFWwindow *window, auto &models){
     }
 
     float cameraSpeed = 8.0f * deltaTime;
+    float offsetRate = 0.5f;
+
     if (glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) || glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS){
         cameraSpeed *= 3.0f;
         models.at("unicorn").position.y = plane.floorMin + 0.5f;
@@ -110,66 +112,69 @@ void processInput(GLFWwindow *window, auto &models){
         (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) ||
         (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)) {
         if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
-            auto offset = camera.speed * camera.front;
-            models.at("unicorn").position += offset;
-            models.at("unicornMane").position += offset;
-            models.at("unicornTail").position += offset;
+//            auto offset = camera.speed * camera.front;
+            models.at("plane").position.z += offsetRate;
+//            models.at("unicornMane").position += offset;
+//            models.at("unicornTail").position += offset;
 
             models.at("unicorn").rotationDegrees = 180.0f;
             models.at("unicornMane").rotationDegrees = 180.0f;
             models.at("unicornTail").rotationDegrees = 180.0f;
         }
-        if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
-            auto offset = camera.speed * camera.front;
-            models.at("unicorn").position -= offset;
-            models.at("unicornMane").position -= offset;
-            models.at("unicornTail").position -= offset;
+        else if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
+//            auto offset = camera.speed * camera.front;
+            models.at("plane").position.z -= offsetRate;
+//            models.at("unicorn").position -= offset;
+//            models.at("unicornMane").position -= offset;
+//            models.at("unicornTail").position -= offset;
 
             models.at("unicorn").rotationDegrees = 360.0f;
             models.at("unicornMane").rotationDegrees = 360.0f;
             models.at("unicornTail").rotationDegrees = 360.0f;
         }
-        if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
-            auto offset = glm::normalize(glm::cross(camera.front, camera.up)) * camera.speed;
-            camera.position -= offset;
-            models.at("unicorn").position -= offset;
-            models.at("unicornMane").position -= offset;
-            models.at("unicornTail").position -= offset;
-
+        else if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
+//            auto offset = glm::normalize(glm::cross(camera.front, camera.up)) * camera.speed;
+//            camera.position -= offset;
+//            models.at("plane").position -= offset;
+//            models.at("unicorn").position -= offset;
+//            models.at("unicornMane").position -= offset;
+//            models.at("unicornTail").position -= offset;
+            models.at("plane").position.x += offsetRate;
             models.at("unicorn").rotationDegrees = -90.0f;
             models.at("unicornMane").rotationDegrees = -90.0f;
             models.at("unicornTail").rotationDegrees = -90.0f;
-            if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
-                models.at("unicorn").rotationDegrees -= 45.0f;
-                models.at("unicornMane").rotationDegrees -= 45.0f;
-                models.at("unicornTail").rotationDegrees -= 45.0f;
-            }
-            if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
-                models.at("unicorn").rotationDegrees += 45.0f;
-                models.at("unicornMane").rotationDegrees += 45.0f;
-                models.at("unicornTail").rotationDegrees += 45.0f;
-            }
+//            if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
+//                models.at("unicorn").rotationDegrees -= 45.0f;
+//                models.at("unicornMane").rotationDegrees -= 45.0f;
+//                models.at("unicornTail").rotationDegrees -= 45.0f;
+//            }
+//            if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
+//                models.at("unicorn").rotationDegrees += 45.0f;
+//                models.at("unicornMane").rotationDegrees += 45.0f;
+//                models.at("unicornTail").rotationDegrees += 45.0f;
+//            }
         }
-        if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
-            auto offset = glm::normalize(glm::cross(camera.front, camera.up)) * camera.speed;
-            camera.position += offset;
-            models.at("unicorn").position += offset;
-            models.at("unicornMane").position += offset;
-            models.at("unicornTail").position += offset;
-
+        else if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
+//            auto offset = glm::normalize(glm::cross(camera.front, camera.up)) * camera.speed;
+//            models.at("plane").position += offset;
+//            camera.position += offset;
+//            models.at("unicorn").position += offset;
+//            models.at("unicornMane").position += offset;
+//            models.at("unicornTail").position += offset;
+            models.at("plane").position.x -= offsetRate;
             models.at("unicorn").rotationDegrees = 90.0f;
             models.at("unicornMane").rotationDegrees = 90.0f;
             models.at("unicornTail").rotationDegrees = 90.0f;
-            if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
-                models.at("unicorn").rotationDegrees += 45.0f;
-                models.at("unicornMane").rotationDegrees += 45.0f;
-                models.at("unicornTail").rotationDegrees += 45.0f;
-            }
-            if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
-                models.at("unicorn").rotationDegrees -= 45.0f;
-                models.at("unicornMane").rotationDegrees -= 45.0f;
-                models.at("unicornTail").rotationDegrees -= 45.0f;
-            }
+//            if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
+//                models.at("unicorn").rotationDegrees += 45.0f;
+//                models.at("unicornMane").rotationDegrees += 45.0f;
+//                models.at("unicornTail").rotationDegrees += 45.0f;
+//            }
+//            if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
+//                models.at("unicorn").rotationDegrees -= 45.0f;
+//                models.at("unicornMane").rotationDegrees -= 45.0f;
+//                models.at("unicornTail").rotationDegrees -= 45.0f;
+//            }
         }
     }
 
@@ -212,7 +217,7 @@ void processInput(GLFWwindow *window, auto &models){
         models.at("unicornTail").position.y = plane.floorMin;
     }
 
-    camera.position.z = models.at("unicorn").position.z + 10.0f;
+//    camera.position.z = models.at("unicorn").position.z + 10.0f;
     light.position.x = models.at("unicorn").position.x;
     light.position.z = models.at("unicorn").position.z + 0.5f;
 }
@@ -335,7 +340,7 @@ int main(){
     glfwSetScrollCallback(window, scrollCallback);
 
     // Anti-aliasing
-    glfwWindowHint(GLFW_SAMPLES, 16);
+    glfwWindowHint(GLFW_SAMPLES, 4);
 
     glEnable(GL_MULTISAMPLE);
     glEnable(GL_FRAMEBUFFER_SRGB);
@@ -353,6 +358,14 @@ int main(){
     auto models = loadModels();
 
     initModels(models, plane.planeMaxWidth, plane.planeMaxHeight);
+
+    camera.position.x = models.at("unicorn").position.x + 1.0f;
+    camera.position.y = 10.0f;
+    camera.position.z = models.at("unicorn").position.z + 10.0f;
+    camera.pitch = -26.0f;
+    camera.yaw = -102.0f;
+    camera.zoom = 80.0f;
+    camera.ProcessMouseMovement();
 
     std::string path = "../src/include/assets/unicorn/unicorn.glb";
     Animation danceAnimation(path, &models.at("unicorn"));
@@ -621,6 +634,8 @@ int main(){
         ImGui::SliderFloat("camera.x", &camera.position.x, -plane.planeMaxWidth, plane.planeMaxWidth);
         ImGui::SliderFloat("camera.y", &camera.position.y, -1, 300);
         ImGui::SliderFloat("camera.z", &camera.position.z, -plane.planeMaxHeight, plane.planeMaxHeight);
+        ImGui::SliderFloat("camera.p", &camera.pitch, -360.0f, 360.0f);
+        ImGui::SliderFloat("camera.yaw", &camera.yaw, -360.0f, 360.0f);
 
         ImGui::Checkbox("Wireframe", &wireframe);
         ImGui::End();

@@ -36,7 +36,7 @@ public:
     float zoom;
 
     // constructor with vectors
-    explicit Camera(glm::vec3 newPosition = glm::vec3(0.0f, 6.0f, 0.0f), glm::vec3 newUp = glm::vec3(0.0f, 1.0f, 0.0f), float newYaw = YAW, float newPitch = PITCH) : front(glm::vec3(0.0f, 0.0f, -1.0f)), speed(SPEED), sensitivity(SENSITIVITY), zoom(ZOOM){
+    explicit Camera(glm::vec3 newPosition = glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3 newUp = glm::vec3(0.0f, 1.0f, 0.0f), float newYaw = YAW, float newPitch = PITCH) : front(glm::vec3(0.0f, 0.0f, -1.0f)), speed(SPEED), sensitivity(SENSITIVITY), zoom(ZOOM){
         this->position = newPosition;
         this->worldUp = newUp;
         this->yaw = newYaw;
@@ -63,21 +63,21 @@ public:
     }
 
     // processes input received from a mouse input system. Expects the offset value in both the x and y direction.
-    void ProcessMouseMovement(float xoffset, float yoffset, GLboolean constrainPitch = true){
-        xoffset *= this->sensitivity;
-        yoffset *= this->sensitivity;
-
-        this->yaw += xoffset;
-        this->pitch += yoffset;
-
-        // make sure that when pitch is out of bounds, screen doesn't get flipped
-        if (constrainPitch)
-        {
-            if (this->pitch > 89.0f)
-                this->pitch = 89.0f;
-            if (this->pitch < -89.0f)
-                this->pitch = -89.0f;
-        }
+    void ProcessMouseMovement(float xoffset = 0.0f, float yoffset = 0.0f, GLboolean constrainPitch = true){
+//        xoffset *= this->sensitivity;
+//        yoffset *= this->sensitivity;
+//
+//        this->yaw += xoffset;
+//        this->pitch += yoffset;
+//
+//        // make sure that when pitch is out of bounds, screen doesn't get flipped
+//        if (constrainPitch)
+//        {
+//            if (this->pitch > 89.0f)
+//                this->pitch = 89.0f;
+//            if (this->pitch < -89.0f)
+//                this->pitch = -89.0f;
+//        }
 
         // update front, right and up Vectors using the updated Euler angles
         updateCameraVectors();

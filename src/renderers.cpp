@@ -187,22 +187,18 @@ void renderFrog(Shader &shader, auto &frogModel, auto &textures, auto &currentFr
     glActiveTexture(GL_TEXTURE0);
 }
 
-void renderPlane(Shader &shader, auto &mesh, auto &texture, auto &depthMap, auto planeMaxWidth, auto planeMaxHeight){
+void renderPlane(Shader &shader, auto &planeModel, auto &texture, auto &depthMap, auto planeMaxWidth, auto planeMaxHeight){
     shader.use();
     shader.setFloat("dif", 0.5);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture);
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, depthMap);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glm::mat4 model = glm::mat4(1.0f);
-    model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
+    auto model = glm::mat4(1.0f);
+    model = glm::translate(model, planeModel.position);
     model = glm::scale(model, glm::vec3(planeMaxWidth, 10.0f, planeMaxHeight));
     shader.setMat4("model", model);
-    mesh.Draw(shader);
+    planeModel.Draw(shader);
     glActiveTexture(GL_TEXTURE0);
 }
 
