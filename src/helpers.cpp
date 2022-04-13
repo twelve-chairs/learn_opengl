@@ -157,7 +157,8 @@ static GLuint initFrameBuffer(auto &frameBufferObject, auto &frameBufferSize, au
             "clouds.jpeg",
             "grass.png",
             "mario_mystery.png",
-            "skydome.jpeg"
+            "skydome.jpeg",
+            "wood.jpg"
     };
     std::map<std::string, unsigned int> textures;
     for (const auto &textureName : textureNames){
@@ -189,6 +190,16 @@ static GLuint initFrameBuffer(auto &frameBufferObject, auto &frameBufferSize, au
     }
 
     return shaders;
+}
+
+static void initCamera(auto &camera, auto &models){
+    camera.position.x = models.at("unicorn").position.x + 1.0f;
+    camera.position.y = 8.0f;
+    camera.position.z = models.at("unicorn").position.z + 10.0f;
+    camera.pitch = -30.0f;
+    camera.yaw = -128.0f;
+    camera.zoom = 60.0f;
+    camera.ProcessMouseMovement();
 }
 
 #endif

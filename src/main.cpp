@@ -42,8 +42,10 @@ const unsigned int VBOs = 5;
 
 // Scene settings
 const int cubeCount = 10;
+const int barrierCount = 35;
 
 std::vector<glm::vec3> cubePositions;
+std::vector<glm::vec4> barrierPositions;
 
 // Plane
 const auto plane = Platform(randomFloat(30.0f, 50.0f), randomFloat(50.0f, 100.0f), 0.0f);
@@ -70,6 +72,14 @@ auto unicornColorTest = glm::vec3(0.163, 0.540, 0.571);
 auto unicornManeColorTest = glm::vec3(0.765, 0.849, 0.086);
 auto unicornTailColorTest = glm::vec3(0.765, 0.450, 0.450);
 
+void setupHorizontalBarriers(){
+    float corridorSize = 0.3f;
+    float maxBarrierWidth = 1.0f;
+    float minBarrierWidth = 0.2f;
+    float maxBarrierLength = 0.4f;
+    float maxBarrierHeight = 0.4f;
+
+}
 
 void playerJump(const float &currentFrame, auto &models){
     float floorOffset = 1.0f;
@@ -112,34 +122,32 @@ void processInput(GLFWwindow *window, auto &models){
         (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) ||
         (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)) {
         if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
-//            auto offset = camera.speed * camera.front;
-            models.at("plane").position.z += offsetRate;
-//            models.at("unicornMane").position += offset;
-//            models.at("unicornTail").position += offset;
+            auto offset = camera.speed * camera.front;
+            models.at("unicorn").position.z -= offsetRate;
+            models.at("unicornMane").position.z -= offsetRate;
+            models.at("unicornTail").position.z -= offsetRate;
 
             models.at("unicorn").rotationDegrees = 180.0f;
             models.at("unicornMane").rotationDegrees = 180.0f;
             models.at("unicornTail").rotationDegrees = 180.0f;
         }
         else if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
-//            auto offset = camera.speed * camera.front;
-            models.at("plane").position.z -= offsetRate;
-//            models.at("unicorn").position -= offset;
-//            models.at("unicornMane").position -= offset;
-//            models.at("unicornTail").position -= offset;
+            auto offset = camera.speed * camera.front;
+            models.at("unicorn").position.z += offsetRate;
+            models.at("unicornMane").position.z += offsetRate;
+            models.at("unicornTail").position.z += offsetRate;
 
             models.at("unicorn").rotationDegrees = 360.0f;
             models.at("unicornMane").rotationDegrees = 360.0f;
             models.at("unicornTail").rotationDegrees = 360.0f;
         }
         else if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
-//            auto offset = glm::normalize(glm::cross(camera.front, camera.up)) * camera.speed;
-//            camera.position -= offset;
-//            models.at("plane").position -= offset;
-//            models.at("unicorn").position -= offset;
-//            models.at("unicornMane").position -= offset;
-//            models.at("unicornTail").position -= offset;
-            models.at("plane").position.x += offsetRate;
+            auto offset = glm::normalize(glm::cross(camera.front, camera.up)) * camera.speed;
+
+            models.at("unicorn").position.x -= offsetRate;
+            models.at("unicornMane").position.x -= offsetRate;
+            models.at("unicornTail").position.x -= offsetRate;
+
             models.at("unicorn").rotationDegrees = -90.0f;
             models.at("unicornMane").rotationDegrees = -90.0f;
             models.at("unicornTail").rotationDegrees = -90.0f;
@@ -155,13 +163,12 @@ void processInput(GLFWwindow *window, auto &models){
 //            }
         }
         else if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
-//            auto offset = glm::normalize(glm::cross(camera.front, camera.up)) * camera.speed;
-//            models.at("plane").position += offset;
-//            camera.position += offset;
-//            models.at("unicorn").position += offset;
-//            models.at("unicornMane").position += offset;
-//            models.at("unicornTail").position += offset;
-            models.at("plane").position.x -= offsetRate;
+            auto offset = glm::normalize(glm::cross(camera.front, camera.up)) * camera.speed;
+
+            models.at("unicorn").position.x += offsetRate;
+            models.at("unicornMane").position.x += offsetRate;
+            models.at("unicornTail").position.x += offsetRate;
+
             models.at("unicorn").rotationDegrees = 90.0f;
             models.at("unicornMane").rotationDegrees = 90.0f;
             models.at("unicornTail").rotationDegrees = 90.0f;
@@ -217,9 +224,11 @@ void processInput(GLFWwindow *window, auto &models){
         models.at("unicornTail").position.y = plane.floorMin;
     }
 
-//    camera.position.z = models.at("unicorn").position.z + 10.0f;
-    light.position.x = models.at("unicorn").position.x;
-    light.position.z = models.at("unicorn").position.z + 0.5f;
+    camera.position.x = models.at("unicorn").position.x + 7.5f;
+    camera.position.z = models.at("unicorn").position.z + 10.0f;
+
+    light.position.x = models.at("unicorn").position.x - 0.5f;
+    light.position.z = models.at("unicorn").position.z - 2.5f;
 }
 
 void framebufferSizeCallback([[maybe_unused]] GLFWwindow *window, [[maybe_unused]] int width, [[maybe_unused]] int height){
@@ -264,6 +273,7 @@ void renderDepth(auto &shaders, auto &models, auto &textures, auto &currentFrame
 
     // Render the loaded models
     renderPlane(shaders.at("shadowMappingDepth"), models.at("plane"), textures.at("grass.png"), depthMap, plane.planeMaxWidth, plane.planeMaxHeight);
+    renderBarriers(shaders.at("shadowMappingDepth"), models.at("cube"), barrierCount, barrierPositions, textures.at("mario_mystery.png"), currentFrame);
     renderMysteryCubes(shaders.at("shadowMappingDepth"), models.at("cube"), cubeCount, cubePositions, textures.at("mario_mystery.png"), currentFrame);
     renderSkyDome(shaders.at("shadowMappingDepth"), models.at("sphere"), textures.at("skydome.jpeg"), currentFrame, plane.planeMaxHeight);
     renderWabbit(shaders.at("shadowMappingDepth"), models.at("wabbit"), textures, currentFrame, plane.planeMaxWidth);
@@ -294,6 +304,7 @@ void render(auto &shaders, auto &models, auto &textures, auto &currentFrame, aut
 
     // Render the loaded models
     renderPlane(shaders.at("default"), models.at("plane"), textures.at("grass.png"), depthMap, plane.planeMaxWidth, plane.planeMaxHeight);
+    renderBarriers(shaders.at("default"), models.at("cube"), barrierCount, barrierPositions, textures.at("wood.jpg"), currentFrame);
     renderMysteryCubes(shaders.at("default"), models.at("cube"), cubeCount, cubePositions, textures.at("mario_mystery.png"), currentFrame);
     renderSkyDome(shaders.at("default"), models.at("sphere"), textures.at("skydome.jpeg"), currentFrame, plane.planeMaxHeight);
     renderFrog(shaders.at("frog"), models.at("frog"), textures, currentFrame, plane.planeMaxWidth);
@@ -340,7 +351,7 @@ int main(){
     glfwSetScrollCallback(window, scrollCallback);
 
     // Anti-aliasing
-    glfwWindowHint(GLFW_SAMPLES, 4);
+//    glfwWindowHint(GLFW_SAMPLES, 4);
 
     glEnable(GL_MULTISAMPLE);
     glEnable(GL_FRAMEBUFFER_SRGB);
@@ -358,25 +369,28 @@ int main(){
     auto models = loadModels();
 
     initModels(models, plane.planeMaxWidth, plane.planeMaxHeight);
-
-    camera.position.x = models.at("unicorn").position.x + 1.0f;
-    camera.position.y = 10.0f;
-    camera.position.z = models.at("unicorn").position.z + 10.0f;
-    camera.pitch = -26.0f;
-    camera.yaw = -102.0f;
-    camera.zoom = 80.0f;
-    camera.ProcessMouseMovement();
+    initCamera(camera, models);
 
     std::string path = "../src/include/assets/unicorn/unicorn.glb";
     Animation danceAnimation(path, &models.at("unicorn"));
     Animator animator(&danceAnimation);
 
     // Static world space positions of our cubes
-    for (unsigned int n = 0; n < cubeCount; n++){
+    for (auto n = 0; n < cubeCount; n++){
         cubePositions.emplace_back(
                 randomFloat(-plane.planeMaxWidth, plane.planeMaxWidth),
                 randomFloat(2.5f, 6.0f),
                 randomFloat(-plane.planeMaxHeight, plane.planeMaxHeight)
+        );
+    }
+
+    // Static world space positions of our barriers
+    for (auto n = 0; n < barrierCount; n++){
+        barrierPositions.emplace_back(
+                randomFloat(-plane.planeMaxWidth, plane.planeMaxWidth),
+                0.6f,
+                randomFloat(-plane.planeMaxHeight, plane.planeMaxHeight),
+                6.0f
         );
     }
 
@@ -625,11 +639,11 @@ int main(){
         flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings;
         ImGui::Begin("Camera / Lights", nullptr);
 
-        ImGui::SliderFloat("light.x", &light.x, -plane.planeMaxWidth - 10, plane.planeMaxWidth + 10);
-        ImGui::SliderFloat("light.y", &light.y, -1, 300);
-        ImGui::SliderFloat("light.z", &light.z, -plane.planeMaxHeight - 10, plane.planeMaxHeight + 10);
+        ImGui::SliderFloat("light.x", &light.position.x, -plane.planeMaxWidth - 10, plane.planeMaxWidth + 10);
+        ImGui::SliderFloat("light.y", &light.position.y, -1, 300);
+        ImGui::SliderFloat("light.z", &light.position.z, -plane.planeMaxHeight - 10, plane.planeMaxHeight + 10);
 
-        ImGui::SliderFloat("zoom", &camera.zoom, -10, plane.planeMaxHeight + 10);
+        ImGui::SliderFloat("zoom", &camera.zoom, -10, 200);
 
         ImGui::SliderFloat("camera.x", &camera.position.x, -plane.planeMaxWidth, plane.planeMaxWidth);
         ImGui::SliderFloat("camera.y", &camera.position.y, -1, 300);

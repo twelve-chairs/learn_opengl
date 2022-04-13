@@ -9,6 +9,8 @@
 #include <glm/gtx/vector_angle.hpp>
 #include <map>
 #include <spdlog/spdlog.h>
+#include "helpers.cpp"
+
 
 void renderGrass(Shader &shader, auto &grassModel, auto &grassCount, auto &light){
     shader.use();
@@ -199,6 +201,28 @@ void renderPlane(Shader &shader, auto &planeModel, auto &texture, auto &depthMap
     model = glm::scale(model, glm::vec3(planeMaxWidth, 10.0f, planeMaxHeight));
     shader.setMat4("model", model);
     planeModel.Draw(shader);
+    glActiveTexture(GL_TEXTURE0);
+}
+
+void renderBarriers(Shader &shader, auto &mesh, auto &count, auto &positions, auto &texture, auto &currentFrame){
+    shader.use();
+    glBindTexture(GL_TEXTURE_2D, texture);
+    for (unsigned int n = 0; n < count; n++) {
+        glm::mat4 model = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
+        model = glm::translate(model, glm::vec3(positions[n].x, positions[n].y, positions[n].z));
+        model = glm::scale(model, glm::vec3(positions[n].w, 1.2f, 0.3f));
+        shader.setMat4("model", model);
+        mesh.Draw(shader);
+
+        model = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
+        float angle = -90.0f;
+        model = glm::translate(model, glm::vec3(positions[n].x, positions[n].y, positions[n].z));
+        model = glm::translate(model, glm::vec3(0.0f));
+        model = glm::rotate(model, glm::radians(angle), glm::vec3(0.0f, 1.0f, 0.0f));
+        model = glm::scale(model, glm::vec3(positions[n].w, 1.2f, 0.3f));
+        shader.setMat4("model", model);
+        mesh.Draw(shader);
+    }
     glActiveTexture(GL_TEXTURE0);
 }
 
