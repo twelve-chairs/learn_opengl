@@ -109,7 +109,7 @@ void processInput(GLFWwindow *window, auto &models){
     }
 
     float cameraSpeed = 8.0f * deltaTime;
-    float offsetRate = 0.5f;
+    float offsetRate = 0.2f;
 
     if (glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) || glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS){
         cameraSpeed *= 3.0f;

@@ -10,7 +10,7 @@ cmake_minimum_required(VERSION 3.20)
 set(PROJECT_NAME "learn_opengl")
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_BUILD_TYPE Release)
 
 project(${PROJECT_NAME} CXX)
 
@@ -20,13 +20,13 @@ list(APPEND CMAKE_PREFIX_PATH ${CMAKE_BINARY_DIR})
 #### Set up Conan and build dependencies #### https://github.com/conan-io/cmake-conan ##################################
 if(NOT EXISTS "${CMAKE_BINARY_DIR}/conan.cmake")
     message(STATUS "Downloading conan.cmake from https://github.com/conan-io/cmake-conan")
-    file(DOWNLOAD "https://raw.githubusercontent.com/conan-io/cmake-conan/v0.16.1/conan.cmake"
+    file(DOWNLOAD "https://raw.githubusercontent.com/conan-io/cmake-conan/0.18.1/conan.cmake"
             "${CMAKE_BINARY_DIR}/conan.cmake"
-            EXPECTED_HASH SHA256=396e16d0f5eabdc6a14afddbcfff62a54a7ee75c6da23f32f7a31bc85db23484
             TLS_VERIFY ON)
 endif()
 
 include(${CMAKE_BINARY_DIR}/conan.cmake)
+
 set(CONAN_SYSREQUIRES_MODE "enabled")
 conan_cmake_configure(REQUIRES
         glfw/3.3.6
@@ -34,9 +34,10 @@ conan_cmake_configure(REQUIRES
         imgui/1.86
         glm/0.9.9.8
         stb/cci.20210910
-        assimp/5.1.6
+#        assimp/5.1.6
         spdlog/1.9.2
-        GENERATORS cmake cmake_paths cmake_find_package)
+        GENERATORS CMakeToolchain CMakeDeps)
+
 conan_cmake_autodetect(settings)
 conan_cmake_install(PATH_OR_REFERENCE .
         BUILD missing
@@ -61,7 +62,7 @@ add_executable(${PROJECT_NAME} ${H_FILES} ${CPP_FILES} ${IMGUI}  ${INCLUDE})
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
         GLEW::GLEW
-        glfw::glfw
+        glfw
         imgui::imgui
         glm::glm
         stb::stb

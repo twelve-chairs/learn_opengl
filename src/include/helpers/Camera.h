@@ -27,9 +27,11 @@ public:
     glm::vec3 up{};
     glm::vec3 right{};
     glm::vec3 worldUp{};
+
     // euler Angles
     float yaw{};
     float pitch{};
+
     // camera options
     float speed;
     float sensitivity;
